@@ -1,4 +1,4 @@
--- Conccord — Migration 0001: profiles
+-- Circly — Migration 0001: profiles
 -- Cria a tabela de perfis 1:1 com auth.users + trigger de criação automática.
 
 create table if not exists public.profiles (

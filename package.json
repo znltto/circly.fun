@@ -1,17 +1,19 @@
 {
-  "name": "conccord",
+  "name": "circly",
   "version": "0.1.0",
   "private": true,
-  "description": "Conccord — Perto, mesmo de longe. Videochamadas privadas.",
+  "description": "Circly — Perto, mesmo de longe. Videochamadas privadas.",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "generate-icons": "node scripts/generate-pwa-icons.mjs"
   },
   "dependencies": {
     "@livekit/components-react": "^2.9.24",
+    "@mediapipe/tasks-vision": "^1.0.1",
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.112.3",
     "class-variance-authority": "^0.7.1",
@@ -33,6 +35,7 @@
     "eslint": "^9.17.0",
     "eslint-config-next": "^15.1.0",
     "postcss": "^8.5.1",
+    "sharp": "^0.35.3",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.2"
   },

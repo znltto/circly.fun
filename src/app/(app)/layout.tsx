@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/layout/AppShell";
+import { isAdminEmail } from "@/lib/admin";
 
 export default async function AppLayout({
   children,
@@ -16,7 +17,7 @@ export default async function AppLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, username, display_name, avatar_url")
+    .select("id, username, display_name, avatar_url, status_message, status_emoji")
     .eq("id", user.id)
     .single();
 
@@ -34,5 +35,11 @@ export default async function AppLayout({
     );
   }
 
-  return <AppShell user={profile}>{children}</AppShell>;
+  const isAdmin = isAdminEmail(user.email);
+
+  return (
+    <AppShell user={profile} isAdmin={isAdmin}>
+      {children}
+    </AppShell>
+  );
 }

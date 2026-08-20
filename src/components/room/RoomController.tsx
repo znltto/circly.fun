@@ -8,6 +8,7 @@ import { Wordmark } from "@/components/brand/Wordmark";
 import { CcoMascot } from "@/components/brand/CcoMascot";
 import { DevicePreview, type DeviceSettings } from "./DevicePreview";
 import { MeetingRoom } from "./MeetingRoom";
+import { RecordingConsentDialog } from "./RecordingConsentDialog";
 
 interface RoomControllerProps {
   slug: string;
@@ -16,6 +17,8 @@ interface RoomControllerProps {
   initialDisplayName: string;
   roomTitle: string;
   participantCount: number;
+  /** Se true, exige modal de consentimento de gravação antes de conectar. */
+  requiresRecordingConsent?: boolean;
 }
 
 interface TokenResponse {
@@ -28,9 +31,38 @@ interface TokenResponse {
 
 type Phase =
   | { kind: "preview" }
+  | { kind: "consent"; settings: DeviceSettings }
   | { kind: "connecting" }
   | { kind: "live"; data: TokenResponse; settings: DeviceSettings }
   | { kind: "error"; message: string };
+
+const CONSENT_STORAGE_PREFIX = "circly:recording-consent:";
+const CONSENT_TTL_MS = 24 * 60 * 60 * 1000; // 24h
+
+function readStoredConsent(slug: string): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const raw = window.sessionStorage.getItem(CONSENT_STORAGE_PREFIX + slug);
+    if (!raw) return false;
+    const ts = Number(raw);
+    if (!Number.isFinite(ts)) return false;
+    return Date.now() - ts < CONSENT_TTL_MS;
+  } catch {
+    return false;
+  }
+}
+
+function writeStoredConsent(slug: string) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(
+      CONSENT_STORAGE_PREFIX + slug,
+      String(Date.now())
+    );
+  } catch {
+    // silencioso
+  }
+}
 
 export function RoomController({
   slug,
@@ -39,12 +71,13 @@ export function RoomController({
   initialDisplayName,
   roomTitle,
   participantCount,
+  requiresRecordingConsent = false,
 }: RoomControllerProps) {
   const router = useRouter();
   const [phase, setPhase] = React.useState<Phase>({ kind: "preview" });
   const [displayName, setDisplayName] = React.useState(initialDisplayName);
 
-  async function handleJoin(settings: DeviceSettings) {
+  async function connect(settings: DeviceSettings) {
     setPhase({ kind: "connecting" });
 
     try {
@@ -79,6 +112,26 @@ export function RoomController({
     }
   }
 
+  async function handleJoin(settings: DeviceSettings) {
+    // Se sala exige consentimento e ainda não temos, mostra o modal
+    if (requiresRecordingConsent && !readStoredConsent(slug)) {
+      setPhase({ kind: "consent", settings });
+      return;
+    }
+    await connect(settings);
+  }
+
+  function handleAcceptConsent() {
+    if (phase.kind !== "consent") return;
+    writeStoredConsent(slug);
+    void connect(phase.settings);
+  }
+
+  function handleDeclineConsent() {
+    // Volta pra inicio (se logado) ou landing
+    router.push(isAuthenticated ? "/inicio" : "/");
+  }
+
   function handleLeave() {
     router.push("/inicio");
   }
@@ -96,6 +149,7 @@ export function RoomController({
         roomTitle={phase.data.roomTitle}
         identity={phase.data.identity}
         displayName={displayName || phase.data.identity}
+        isHost={phase.data.role === "host"}
         onLeave={handleLeave}
         audio={{
           enabled: phase.settings.audioEnabled,
@@ -105,6 +159,8 @@ export function RoomController({
           enabled: phase.settings.videoEnabled,
           deviceId: phase.settings.videoDeviceId,
         }}
+        filter={phase.settings.filter}
+        backgroundImage={phase.settings.backgroundImage}
       />
     );
   }
@@ -138,6 +194,14 @@ export function RoomController({
           onDisplayNameChange={isAuthenticated ? undefined : setDisplayName}
         />
       </section>
+
+      {phase.kind === "consent" && (
+        <RecordingConsentDialog
+          roomTitle={roomTitle}
+          onAccept={handleAcceptConsent}
+          onDecline={handleDeclineConsent}
+        />
+      )}
     </main>
   );
 }

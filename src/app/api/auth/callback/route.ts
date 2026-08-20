@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 
 /**
  * Callback para magic links (caso o email vier com link em vez de código).
- * O fluxo principal do Conccord é OTP, mas o Supabase envia ambos por padrão.
+ * O fluxo principal do Circly é OTP, mas o Supabase envia ambos por padrão.
  */
 export async function GET(request: Request) {
   const url = new URL(request.url);

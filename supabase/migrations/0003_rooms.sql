@@ -1,4 +1,4 @@
--- Conccord — Migration 0003: rooms, invites, participants, messages.
+-- Circly — Migration 0003: rooms, invites, participants, messages.
 -- Ordem: (1) todos os enums e tabelas, (2) triggers/índices, (3) RLS + policies.
 -- Assim policies podem referenciar qualquer tabela criada acima sem forward-ref.
 

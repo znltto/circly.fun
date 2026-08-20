@@ -100,7 +100,7 @@ export default function DesignSystem() {
                 Metadata e legendas — 12 / 16.
               </p>
               <p className="font-mono text-sm text-text-secondary">
-                conccord.app/s/ab12cd
+                circly.app/s/ab12cd
               </p>
             </div>
           </Section>
@@ -150,7 +150,7 @@ export default function DesignSystem() {
               <Input
                 label="Link da sala"
                 readOnly
-                defaultValue="conccord.app/s/ab12cd"
+                defaultValue="circly.app/s/ab12cd"
                 rightAdornment={<Copy className="h-4 w-4" />}
               />
             </div>

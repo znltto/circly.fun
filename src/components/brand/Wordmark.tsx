@@ -7,9 +7,9 @@ interface WordmarkProps {
 }
 
 /**
- * Wordmark oficial "Conccord". Os dois "c" centrais em lime,
- * o restante em off-white. Use `mono` para aplicações onde
- * o wordmark precisa herdar a cor do texto (ex: dentro de botões).
+ * Wordmark oficial "Circly". As duas letras centrais "cl" em lime,
+ * o restante em off-white — mantém o acento visual no meio da palavra,
+ * como no Conccord original com "cc".
  */
 export function Wordmark({ className, mono = false }: WordmarkProps) {
   return (
@@ -18,15 +18,15 @@ export function Wordmark({ className, mono = false }: WordmarkProps) {
         "inline-block font-sans font-normal tracking-[-0.02em] leading-none whitespace-nowrap",
         className
       )}
-      aria-label="Conccord"
+      aria-label="Circly"
     >
       {mono ? (
-        "Conccord"
+        "Circly"
       ) : (
         <>
-          <span>Con</span>
-          <span className="text-brand">cc</span>
-          <span>ord</span>
+          <span>Cir</span>
+          <span className="text-brand">cl</span>
+          <span>y</span>
         </>
       )}
     </span>

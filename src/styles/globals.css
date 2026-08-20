@@ -105,3 +105,88 @@
     text-wrap: pretty;
   }
 }
+
+/* ================================================================
+ * Animações da marca (BrandMark animate=true)
+ * ================================================================ */
+
+.brandmark-live {
+  --pulse-scale: 1.08;
+}
+
+.brandmark-node-1,
+.brandmark-node-2,
+.brandmark-node-3 {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: brandmark-node-pulse 3.6s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+.brandmark-node-2 { animation-delay: 1.2s; }
+.brandmark-node-3 { animation-delay: 2.4s; }
+
+.brandmark-arc-1,
+.brandmark-arc-2,
+.brandmark-arc-3 {
+  animation: brandmark-arc-glow 6s ease-in-out infinite;
+}
+.brandmark-arc-2 { animation-delay: 2s; }
+.brandmark-arc-3 { animation-delay: 4s; }
+
+.brandmark-inner {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: brandmark-inner-breathe 4.8s ease-in-out infinite;
+}
+.brandmark-inner-2 {
+  animation-delay: 0.3s;
+}
+
+@keyframes brandmark-node-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(var(--pulse-scale));
+    opacity: 0.85;
+  }
+}
+
+@keyframes brandmark-arc-glow {
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 1; filter: drop-shadow(0 0 2px rgba(215, 255, 63, 0.4)); }
+}
+
+@keyframes brandmark-inner-breathe {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(0.85); opacity: 0.7; }
+}
+
+/* ================================================================
+ * Page transitions — usados via template.tsx
+ * ================================================================ */
+
+@keyframes page-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.page-transition {
+  animation: page-fade-in 320ms ease-out-quart both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brandmark-node-1,
+  .brandmark-node-2,
+  .brandmark-node-3,
+  .brandmark-arc-1,
+  .brandmark-arc-2,
+  .brandmark-arc-3,
+  .brandmark-inner {
+    animation: none !important;
+  }
+  .page-transition {
+    animation: none !important;
+  }
+}

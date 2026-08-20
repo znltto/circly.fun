@@ -1,4 +1,4 @@
--- Conccord — Migration 0004: elimina recursão de RLS.
+-- Circly — Migration 0004: elimina recursão de RLS.
 -- Erro 42P17 aparecia ao criar sala porque:
 --   1. `rooms_select_participants` (em rooms) consultava room_participants
 --   2. `room_participants_select_in_room` consultava a si mesma

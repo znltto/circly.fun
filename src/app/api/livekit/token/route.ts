@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createLivekitToken } from "@/lib/livekit/token";
 import { resolveInvite } from "@/lib/rooms/actions";
 import { makeLivekitIdentity } from "@/lib/rooms/slug";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 const bodySchema = z.object({
   slug: z.string().min(1),
@@ -27,6 +28,21 @@ const bodySchema = z.object({
  *  - Nunca retorna dados privados da sala (título, host, etc.) além do já sabido.
  */
 export async function POST(request: Request) {
+  // Rate limit: 20 tokens por minuto por IP (mais que suficiente pra
+  // uso normal, corta bot loops)
+  const ip = getClientIp(request.headers);
+  const rl = checkRateLimit({
+    key: `livekit-token:${ip}`,
+    limit: 20,
+    windowSeconds: 60,
+  });
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: `Muitas tentativas. Tente em ${rl.resetInSeconds}s.` },
+      { status: 429, headers: { "Retry-After": String(rl.resetInSeconds) } }
+    );
+  }
+
   let payload: unknown;
   try {
     payload = await request.json();

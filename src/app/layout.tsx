@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Nunito_Sans, Bowlby_One, Geist_Mono } from "next/font/google";
 import "@/styles/globals.css";
+import { ServiceWorkerRegistrar } from "@/components/pwa/ServiceWorkerRegistrar";
+import { InstallPrompt } from "@/components/pwa/InstallPrompt";
+import { HelpBubble } from "@/components/help/HelpBubble";
 
 const nunitoSans = Nunito_Sans({
   subsets: ["latin"],
@@ -23,24 +26,30 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Conccord — Perto, mesmo de longe.",
-    template: "%s · Conccord",
+    default: "Circly — Perto, mesmo de longe.",
+    template: "%s · Circly",
   },
   description:
     "Sua sala privada para conversar, ver e compartilhar com quem importa.",
-  applicationName: "Conccord",
-  authors: [{ name: "Conccord" }],
+  applicationName: "Circly",
+  authors: [{ name: "Circly" }],
   keywords: ["videochamada", "sala privada", "amigos", "conversa"],
   openGraph: {
-    title: "Conccord",
+    title: "Circly",
     description: "Perto, mesmo de longe.",
-    siteName: "Conccord",
+    siteName: "Circly",
     locale: "pt_BR",
     type: "website",
   },
   robots: {
     index: true,
     follow: true,
+  },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    title: "Circly",
+    statusBarStyle: "black-translucent",
+    capable: true,
   },
 };
 
@@ -65,7 +74,10 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-background text-text-primary font-sans antialiased">
+        <ServiceWorkerRegistrar />
         {children}
+        <InstallPrompt />
+        <HelpBubble />
       </body>
     </html>
   );

@@ -39,11 +39,13 @@ export async function updateSession(request: NextRequest) {
 
   const isAuthRoute =
     path.startsWith("/entrar") || path.startsWith("/verificar");
+  const isOnboardingRoute = path.startsWith("/onboarding");
   const isPrivateRoute =
     path.startsWith("/inicio") ||
     path.startsWith("/pessoas") ||
     path.startsWith("/salas") ||
-    path.startsWith("/onboarding");
+    path.startsWith("/conta") ||
+    isOnboardingRoute;
 
   if (!user && isPrivateRoute) {
     const url = request.nextUrl.clone();
@@ -56,6 +58,26 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/inicio";
     return NextResponse.redirect(url);
+  }
+
+  // Onboarding gate: usuários logados sem onboarded_at vão para /onboarding;
+  // usuários que já completaram não conseguem voltar para /onboarding.
+  if (user && (isPrivateRoute || isOnboardingRoute)) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("onboarded_at")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const hasOnboarded = !!profile?.onboarded_at;
+
+    if (!hasOnboarded && !isOnboardingRoute) {
+      return NextResponse.redirect(new URL("/onboarding", request.url));
+    }
+
+    if (hasOnboarded && isOnboardingRoute) {
+      return NextResponse.redirect(new URL("/inicio", request.url));
+    }
   }
 
   return response;

@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" preserveAspectRatio="xMidYMid meet" fill="none" color="#F5F5F2">
-  <g id="conccord-symbol">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 80" preserveAspectRatio="xMidYMid meet" fill="none" color="#F5F5F2">
+  <g id="circly-symbol" transform="translate(4 4)">
     <path d="M60.9 25.5 A27 27 0 0 0 26.6 10.7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
     <path d="M11.2 25.2 A27 27 0 0 0 11.5 47.4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
     <path d="M27.2 61.5 A27 27 0 0 0 60.9 46.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
@@ -8,5 +8,9 @@
     <circle cx="17" cy="57" r="5" fill="currentColor"/>
     <circle cx="29" cy="36" r="3.2" fill="currentColor"/>
     <circle cx="40" cy="36" r="3.2" fill="currentColor"/>
+  </g>
+  <g id="circly-wordmark">
+    <text x="100" y="40" dominant-baseline="central" fill="currentColor"
+          style="font-family:Manrope,Inter,Geist,system-ui,sans-serif;font-weight:400;font-size:36px;letter-spacing:-0.8px">Circly</text>
   </g>
 </svg>

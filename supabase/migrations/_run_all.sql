@@ -1,4 +1,4 @@
--- Conccord — Migration 0001: profiles
+-- Circly — Migration 0001: profiles
 -- Cria a tabela de perfis 1:1 com auth.users + trigger de criação automática.
 
 create table if not exists public.profiles (
@@ -105,7 +105,7 @@ for each row execute function public.handle_new_user();
 -- NEXT MIGRATION
 -- ============================================================
 
--- Conccord — Migration 0002: friendships
+-- Circly — Migration 0002: friendships
 -- Solicitações de amizade + amizades aceitas + bloqueios.
 
 create type friendship_status as enum ('pending', 'accepted', 'blocked');
@@ -180,7 +180,7 @@ using (auth.uid() in (requester_id, addressee_id));
 -- NEXT MIGRATION
 -- ============================================================
 
--- Conccord — Migration 0003: rooms, invites, participants, messages.
+-- Circly — Migration 0003: rooms, invites, participants, messages.
 -- Ordem: (1) todos os enums e tabelas, (2) triggers/índices, (3) RLS + policies.
 -- Assim policies podem referenciar qualquer tabela criada acima sem forward-ref.
 

@@ -1,4 +1,4 @@
--- Conccord — Migration 0002: friendships
+-- Circly — Migration 0002: friendships
 -- Solicitações de amizade + amizades aceitas + bloqueios.
 
 create type friendship_status as enum ('pending', 'accepted', 'blocked');

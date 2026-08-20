@@ -15,7 +15,7 @@ interface CcoMascotProps extends React.SVGAttributes<SVGSVGElement> {
 }
 
 /**
- * CCO — mascote do Conccord.
+ * CCO — mascote do Circly.
  * Usa a mesma linguagem visual da logo (órbita com 3 nós + presenças internas).
  * O que muda entre estados é o miolo (os "olhos") e sutis alterações nos arcos.
  *

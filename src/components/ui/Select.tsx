@@ -21,7 +21,7 @@ interface SelectProps {
 }
 
 /**
- * Select customizado — mesmo visual dos Inputs Conccord.
+ * Select customizado — mesmo visual dos Inputs Circly.
  * Navegação por teclado, click-outside pra fechar, foco visível.
  */
 export function Select({

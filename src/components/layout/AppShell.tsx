@@ -14,11 +14,16 @@ interface AppShellProps {
     display_name: string;
     username: string;
     avatar_url: string | null;
+    status_message?: string | null;
+    status_emoji?: string | null;
   };
+  isAdmin?: boolean;
   children: React.ReactNode;
 }
 
-export function AppShell({ user, children }: AppShellProps) {
+export function AppShell({ user, isAdmin = false, children }: AppShellProps) {
+  const hasStatus = !!(user.status_message || user.status_emoji);
+
   return (
     <PresenceProvider selfId={user.id}>
       <div className="flex min-h-screen">
@@ -31,37 +36,63 @@ export function AppShell({ user, children }: AppShellProps) {
             href="/inicio"
             className="mb-8 flex items-center gap-2.5 rounded-md px-2 py-1"
           >
-            <BrandMark className="h-6 w-6 text-brand" />
+            <BrandMark className="h-6 w-6" animate />
             <Wordmark className="text-sm" />
           </Link>
 
-          <SidebarNav />
+          <SidebarNav isAdmin={isAdmin} />
 
-          <div className="mt-auto flex items-center gap-3 rounded-md border border-border bg-surface p-3">
-            <UserAvatar
-              name={user.display_name}
-              src={user.avatar_url}
-              size="md"
-              status="online"
-            />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm text-text-primary">
-                {user.display_name}
-              </p>
-              <p className="truncate font-mono text-xs text-text-muted">
-                @{user.username}
-              </p>
+          <div className="mt-auto space-y-2">
+            <div className="flex items-start gap-3 rounded-md border border-border bg-surface p-3">
+              <UserAvatar
+                name={user.display_name}
+                src={user.avatar_url}
+                size="md"
+                status="online"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm text-text-primary">
+                  {user.display_name}
+                </p>
+                <p className="truncate font-mono text-xs text-text-muted">
+                  @{user.username}
+                </p>
+                {hasStatus && (
+                  <p className="mt-1 truncate text-xs text-text-secondary">
+                    {user.status_emoji && (
+                      <span className="mr-1">{user.status_emoji}</span>
+                    )}
+                    {user.status_message}
+                  </p>
+                )}
+              </div>
+              <form action="/api/auth/sair" method="post">
+                <Button
+                  type="submit"
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Sair"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </form>
             </div>
-            <form action="/api/auth/sair" method="post">
-              <Button
-                type="submit"
-                variant="ghost"
-                size="icon"
-                aria-label="Sair"
+
+            <p className="flex items-center justify-center gap-3 text-[10px] text-text-muted">
+              <Link
+                href="/termos"
+                className="hover:text-text-secondary"
               >
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </form>
+                Termos
+              </Link>
+              <span>·</span>
+              <Link
+                href="/privacidade"
+                className="hover:text-text-secondary"
+              >
+                Privacidade
+              </Link>
+            </p>
           </div>
         </aside>
 

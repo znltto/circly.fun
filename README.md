@@ -1,4 +1,4 @@
-# Conccord
+# Circly
 
 > **Perto, mesmo de longe.**
 > Videochamadas privadas para poucas pessoas. Next.js + Supabase + LiveKit + Vercel.
@@ -52,14 +52,27 @@ No Supabase Dashboard → **SQL Editor** → execute na ordem:
 1. `supabase/migrations/0001_profiles.sql`
 2. `supabase/migrations/0002_friendships.sql`
 3. `supabase/migrations/0003_rooms.sql`
+4. `supabase/migrations/0004_fix_rls_recursion.sql`
+5. `supabase/migrations/0005_profiles_onboarded_at.sql`
+6. `supabase/migrations/0006_direct_messages.sql`
+7. `supabase/migrations/0008_message_extras.sql` (anexos e reações no chat da sala)
 
 Cada script é idempotente e cria tabelas + RLS + triggers.
 
 ### 4. Email OTP
 
-No Supabase Dashboard → **Authentication → Email Templates → Magic Link**, garanta que o corpo do email contém `{{ .Token }}` (ex: `Seu código Conccord: {{ .Token }}`).
+No Supabase Dashboard → **Authentication → Email Templates → Magic Link**, garanta que o corpo do email contém `{{ .Token }}` (ex: `Seu código Circly: {{ .Token }}`).
 
 Padrão: OTP expira em 60 minutos — pode reduzir em Auth → Providers → Email.
+
+### 4.1. Buckets do Storage
+
+No Supabase Dashboard → **Storage → New bucket**, crie:
+
+- `avatars` — **Public** (foto de perfil, URL pública).
+- `room-uploads` — **Private** (imagens do chat da sala, servidas por signed URL de 24h).
+
+Se algum bucket estiver ausente, os endpoints correspondentes respondem `501` com uma mensagem clara, mas o resto do app continua funcionando.
 
 ### 5. LiveKit — checar conexão
 
@@ -87,7 +100,7 @@ Abra <http://localhost:3000>.
 ## Stack
 
 - **Next.js 15** — App Router, TypeScript estrito, Server Actions
-- **Tailwind CSS 3** com tokens Conccord (paleta dark/light, radius, tipografia)
+- **Tailwind CSS 3** com tokens Circly (paleta dark/light, radius, tipografia)
 - **Supabase** — Auth (OTP), Postgres com RLS, Realtime (presença + chat), Storage
 - **LiveKit Cloud** — WebRTC (áudio/vídeo/tela) via `@livekit/components-react`
 - **Zod** — validação server-side de todos os payloads
@@ -150,7 +163,7 @@ supabase/
 1. Suba para GitHub.
 2. Import no <https://vercel.com>.
 3. Environment Variables: cole todas as chaves de `.env.local`.
-4. `NEXT_PUBLIC_APP_URL` = URL final do deploy (ex: `https://conccord.vercel.app`).
+4. `NEXT_PUBLIC_APP_URL` = URL final do deploy (ex: `https://circly.vercel.app`).
 5. No Supabase → Authentication → URL Configuration, adicione a URL de produção em "Site URL" e "Redirect URLs".
 6. Deploy.
 

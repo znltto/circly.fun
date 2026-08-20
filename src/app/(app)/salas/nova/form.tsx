@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useActionState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Copy, Check, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -135,11 +136,13 @@ function SuccessCard({
   appUrl: string;
   state: NonNullable<CreateRoomState>;
 }) {
+  const router = useRouter();
   const url = state.inviteToken
     ? `${appUrl}/s/${state.slug}?i=${state.inviteToken}`
     : `${appUrl}/s/${state.slug}`;
 
   const [copied, setCopied] = React.useState(false);
+  const [entering, startEntering] = React.useTransition();
 
   async function copyLink() {
     try {
@@ -149,6 +152,12 @@ function SuccessCard({
     } catch {
       // Sem clipboard API — usuário copia manualmente
     }
+  }
+
+  function handleEnter() {
+    startEntering(() => {
+      router.push(`/s/${state.slug}`);
+    });
   }
 
   return (
@@ -188,13 +197,18 @@ function SuccessCard({
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <Link href={`/s/${state.slug}`}>
-          <Button rightIcon={<ArrowRight className="h-4 w-4" />}>
-            Entrar na sala
-          </Button>
-        </Link>
+        <Button
+          onClick={handleEnter}
+          loading={entering}
+          disabled={entering}
+          rightIcon={!entering ? <ArrowRight className="h-4 w-4" /> : undefined}
+        >
+          {entering ? "Abrindo sala..." : "Entrar na sala"}
+        </Button>
         <Link href="/inicio">
-          <Button variant="ghost">Voltar</Button>
+          <Button variant="ghost" disabled={entering}>
+            Voltar
+          </Button>
         </Link>
       </div>
     </div>

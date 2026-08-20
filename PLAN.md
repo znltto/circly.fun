@@ -1,4 +1,4 @@
-# Conccord — Plano de Execução
+# Circly — Plano de Execução
 
 > **Perto, mesmo de longe.**
 > MVP web de videochamadas privadas. Stack Next.js + Supabase + LiveKit + Vercel, tudo em plano free.
@@ -11,7 +11,7 @@
 
 **Regra de ouro:** Supabase para identidade/dados, LiveKit para mídia, Vercel para app. Sem misturar responsabilidades.
 
-**Custos previstos:** R$ 0 enquanto o uso ficar dentro dos free tiers (LiveKit: 5.000 min/mês, 100 conexões simultâneas; Supabase Free: 50k MAU; Vercel Hobby). Domínio custom é opcional (~R$ 40/ano se quiser conccord.com.br).
+**Custos previstos:** R$ 0 enquanto o uso ficar dentro dos free tiers (LiveKit: 5.000 min/mês, 100 conexões simultâneas; Supabase Free: 50k MAU; Vercel Hobby). Domínio custom é opcional (~R$ 40/ano se quiser circly.com.br).
 
 ---
 
@@ -30,7 +30,7 @@
    - `LIVEKIT_API_SECRET` (SEGREDO — só server-side)
 3. Criar conta em **vercel.com** (não precisa deployar ainda).
 4. Instalar **pnpm**: `npm install -g pnpm` (ou usar npm — atualizo os scripts).
-5. (Opcional) Registrar domínio: `conccord.app`, `conccord.com.br` ou `conccord.dev`.
+5. (Opcional) Registrar domínio: `circly.app`, `circly.com.br` ou `circly.dev`.
 
 **Entregável:** arquivo `.env.local` populado (não commitado).
 
@@ -50,7 +50,7 @@
 - AppShell mínimo (sidebar 220–240px desktop / bottom nav mobile).
 - ThemeProvider (dark padrão, toggle).
 
-**Entregável:** app renderiza uma página em branco no tema Conccord.
+**Entregável:** app renderiza uma página em branco no tema Circly.
 
 ---
 
@@ -59,7 +59,7 @@
 **Objetivo:** Biblioteca de componentes reutilizáveis + identidade visual completa.
 
 - **BrandMark** (SVG): dois "C" convergentes/espelhados.
-- **Wordmark**: "Conccord" em Manrope SemiBold com tracking customizado.
+- **Wordmark**: "Circly" em Manrope SemiBold com tracking customizado.
 - **CcoMascot** (SVG componentizado): variantes `idle` / `waiting` / `offline` / `muted` / `camera-off` / `connection-error` / `goodbye`.
 - Componentes base (shadcn/ui como base comportamental, estilos próprios):
   - `Button` (Primary/Secondary/Ghost/Danger) com CVA
@@ -205,7 +205,7 @@
   - Domínio custom (se comprado).
 - README com: setup local, variáveis, migrations, deploy, checklist de segurança, limites do free tier.
 
-**Entregável:** produto no ar em `conccord.vercel.app` (ou domínio próprio), pronto para convidar os amigos.
+**Entregável:** produto no ar em `circly.vercel.app` (ou domínio próprio), pronto para convidar os amigos.
 
 ---
 
@@ -321,7 +321,7 @@ Fase 1 em andamento: bootstrap do Next.js. Assim que estiver rodando, seguimos p
 # 📦 Roadmap pós-MVP (Fases 10 → 20)
 
 Depois que as Fases 0-9 estabilizarem e você conseguir usar com 1-2 amigos, este é o plano
-para transformar o Conccord em algo "sério" pra convidar mais gente.
+para transformar o Circly em algo "sério" pra convidar mais gente.
 
 ## Fase 10 — Moderação e ciclo de vida da sala · ~4-6h
 

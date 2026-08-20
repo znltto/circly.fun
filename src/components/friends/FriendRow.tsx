@@ -3,7 +3,7 @@
 import * as React from "react";
 import { UserAvatar, PresenceIndicator } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
-import { MoreHorizontal, UserMinus } from "lucide-react";
+import { UserMinus } from "lucide-react";
 import { usePresence } from "@/components/presence/PresenceProvider";
 import { removeFriend } from "@/lib/friends/actions";
 

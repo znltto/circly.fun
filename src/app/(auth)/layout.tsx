@@ -13,7 +13,7 @@ export default function AuthLayout({
         <Link
           href="/"
           className="flex items-center gap-2.5"
-          aria-label="Conccord — início"
+          aria-label="Circly — início"
         >
           <BrandMark className="h-6 w-6 text-brand" />
           <Wordmark className="text-sm text-text-primary" />
@@ -25,7 +25,7 @@ export default function AuthLayout({
       </div>
 
       <footer className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6 text-xs text-text-muted">
-        <span>© {new Date().getFullYear()} Conccord</span>
+        <span>© {new Date().getFullYear()} Circly</span>
         <span className="font-mono">Perto, mesmo de longe.</span>
       </footer>
     </main>

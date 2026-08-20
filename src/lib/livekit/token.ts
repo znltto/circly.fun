@@ -6,7 +6,15 @@ interface TokenParams {
   identity: string;
   name: string;
   role: "host" | "user" | "guest";
+  /** Serializado em `metadata` do participante — visível para os outros. */
+  avatarUrl?: string | null;
+  username?: string | null;
   ttlSeconds?: number;
+}
+
+export interface ParticipantMetadata {
+  avatarUrl?: string | null;
+  username?: string | null;
 }
 
 /**
@@ -18,6 +26,8 @@ export async function createLivekitToken({
   identity,
   name,
   role,
+  avatarUrl,
+  username,
   ttlSeconds,
 }: TokenParams): Promise<string> {
   const apiKey = process.env.LIVEKIT_API_KEY;
@@ -29,10 +39,16 @@ export async function createLivekitToken({
 
   const ttl = ttlSeconds ?? (role === "guest" ? 60 * 30 : 60 * 60);
 
+  const metadata: ParticipantMetadata = {
+    avatarUrl: avatarUrl ?? null,
+    username: username ?? null,
+  };
+
   const at = new AccessToken(apiKey, apiSecret, {
     identity,
     name,
     ttl,
+    metadata: JSON.stringify(metadata),
   });
 
   const grant: VideoGrant = {

@@ -21,6 +21,12 @@ export type Json =
 
 export type FriendshipStatus = "pending" | "accepted" | "blocked";
 export type RoomVisibility = "private" | "link" | "friends";
+export type RecordingStatus =
+  | "starting"
+  | "active"
+  | "complete"
+  | "failed"
+  | "aborted";
 
 export interface Database {
   public: {
@@ -33,6 +39,10 @@ export interface Database {
           avatar_url: string | null;
           created_at: string;
           updated_at: string;
+          onboarded_at: string | null;
+          status_message: string | null;
+          status_emoji: string | null;
+          status_updated_at: string | null;
         };
         Insert: {
           id: string;
@@ -41,6 +51,10 @@ export interface Database {
           avatar_url?: string | null;
           created_at?: string;
           updated_at?: string;
+          onboarded_at?: string | null;
+          status_message?: string | null;
+          status_emoji?: string | null;
+          status_updated_at?: string | null;
         };
         Update: {
           id?: string;
@@ -49,6 +63,10 @@ export interface Database {
           avatar_url?: string | null;
           created_at?: string;
           updated_at?: string;
+          onboarded_at?: string | null;
+          status_message?: string | null;
+          status_emoji?: string | null;
+          status_updated_at?: string | null;
         };
         Relationships: [];
       };
@@ -106,6 +124,7 @@ export interface Database {
           updated_at: string;
           expires_at: string | null;
           ended_at: string | null;
+          recording_consent_required: boolean;
         };
         Insert: {
           id?: string;
@@ -120,6 +139,7 @@ export interface Database {
           updated_at?: string;
           expires_at?: string | null;
           ended_at?: string | null;
+          recording_consent_required?: boolean;
         };
         Update: {
           id?: string;
@@ -134,11 +154,70 @@ export interface Database {
           updated_at?: string;
           expires_at?: string | null;
           ended_at?: string | null;
+          recording_consent_required?: boolean;
         };
         Relationships: [
           {
             foreignKeyName: "rooms_host_id_fkey";
             columns: ["host_id"];
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      room_recordings: {
+        Row: {
+          id: string;
+          room_id: string;
+          egress_id: string;
+          status: RecordingStatus;
+          storage_path: string | null;
+          size_bytes: number | null;
+          duration_seconds: number | null;
+          started_by: string;
+          started_at: string;
+          ended_at: string | null;
+          expires_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          room_id: string;
+          egress_id: string;
+          status?: RecordingStatus;
+          storage_path?: string | null;
+          size_bytes?: number | null;
+          duration_seconds?: number | null;
+          started_by: string;
+          started_at?: string;
+          ended_at?: string | null;
+          expires_at?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          room_id?: string;
+          egress_id?: string;
+          status?: RecordingStatus;
+          storage_path?: string | null;
+          size_bytes?: number | null;
+          duration_seconds?: number | null;
+          started_by?: string;
+          started_at?: string;
+          ended_at?: string | null;
+          expires_at?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "room_recordings_room_id_fkey";
+            columns: ["room_id"];
+            referencedRelation: "rooms";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "room_recordings_started_by_fkey";
+            columns: ["started_by"];
             referencedRelation: "profiles";
             referencedColumns: ["id"];
           }
@@ -218,6 +297,8 @@ export interface Database {
           guest_name: string | null;
           content: string;
           created_at: string;
+          attachment_url: string | null;
+          attachment_type: string | null;
         };
         Insert: {
           id?: string;
@@ -226,6 +307,8 @@ export interface Database {
           guest_name?: string | null;
           content: string;
           created_at?: string;
+          attachment_url?: string | null;
+          attachment_type?: string | null;
         };
         Update: {
           id?: string;
@@ -234,6 +317,104 @@ export interface Database {
           guest_name?: string | null;
           content?: string;
           created_at?: string;
+          attachment_url?: string | null;
+          attachment_type?: string | null;
+        };
+        Relationships: [];
+      };
+      message_reactions: {
+        Row: {
+          id: string;
+          message_id: string;
+          reactor_id: string;
+          emoji: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          message_id: string;
+          reactor_id: string;
+          emoji: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          message_id?: string;
+          reactor_id?: string;
+          emoji?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      ai_chat_logs: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          user_email: string | null;
+          ip: string | null;
+          model: string;
+          prompt_tokens: number;
+          completion_tokens: number;
+          total_tokens: number;
+          cost_micro_dollars: number;
+          user_message: string | null;
+          assistant_message: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          user_email?: string | null;
+          ip?: string | null;
+          model?: string;
+          prompt_tokens?: number;
+          completion_tokens?: number;
+          total_tokens?: number;
+          cost_micro_dollars?: number;
+          user_message?: string | null;
+          assistant_message?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string | null;
+          user_email?: string | null;
+          ip?: string | null;
+          model?: string;
+          prompt_tokens?: number;
+          completion_tokens?: number;
+          total_tokens?: number;
+          cost_micro_dollars?: number;
+          user_message?: string | null;
+          assistant_message?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      direct_messages: {
+        Row: {
+          id: string;
+          sender_id: string;
+          recipient_id: string;
+          content: string;
+          created_at: string;
+          read_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          sender_id: string;
+          recipient_id: string;
+          content: string;
+          created_at?: string;
+          read_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          sender_id?: string;
+          recipient_id?: string;
+          content?: string;
+          created_at?: string;
+          read_at?: string | null;
         };
         Relationships: [];
       };

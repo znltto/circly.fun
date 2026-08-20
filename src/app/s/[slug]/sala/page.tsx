@@ -66,15 +66,17 @@ export default async function SalaPage({ params, searchParams }: PageProps) {
     return <AccessDenied slug={slug} />;
   }
 
-  // Contagem inicial de participantes (via admin, evita depender de RLS aqui)
+  // Contagem inicial de participantes + flag de consentimento (via admin,
+  // evita depender de RLS aqui)
   const admin = createAdminClient();
   const { data: room } = await admin
     .from("rooms")
-    .select("id")
+    .select("id, recording_consent_required")
     .eq("slug", slug)
     .single();
 
   let participantCount = 0;
+  let requiresRecordingConsent = false;
   if (room) {
     const { count } = await admin
       .from("room_participants")
@@ -82,6 +84,7 @@ export default async function SalaPage({ params, searchParams }: PageProps) {
       .eq("room_id", room.id)
       .is("left_at", null);
     participantCount = count ?? 0;
+    requiresRecordingConsent = room.recording_consent_required ?? false;
   }
 
   return (
@@ -92,6 +95,7 @@ export default async function SalaPage({ params, searchParams }: PageProps) {
       initialDisplayName={displayName}
       roomTitle={roomTitle}
       participantCount={participantCount}
+      requiresRecordingConsent={requiresRecordingConsent}
     />
   );
 }

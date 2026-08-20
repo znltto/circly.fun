@@ -32,7 +32,7 @@ export function GuestJoinForm({
     }
     setError(null);
     try {
-      sessionStorage.setItem(`conccord:guest:${slug}`, clean);
+      sessionStorage.setItem(`circly:guest:${slug}`, clean);
     } catch {
       // storage bloqueado — segue mesmo assim; a sala pedirá de novo
     }

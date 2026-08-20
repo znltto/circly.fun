@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, DoorOpen } from "lucide-react";
+import { Home, Users, DoorOpen, User, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
   { href: "/inicio", label: "Início", icon: Home },
   { href: "/pessoas", label: "Pessoas", icon: Users },
-  { href: "/salas/nova", label: "Nova sala", icon: DoorOpen },
+  { href: "/mensagens", label: "DMs", icon: MessageSquare },
+  { href: "/salas/nova", label: "Nova", icon: DoorOpen },
+  { href: "/conta", label: "Conta", icon: User },
 ];
 
 export function MobileNav() {

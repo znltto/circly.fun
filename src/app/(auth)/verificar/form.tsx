@@ -11,7 +11,7 @@ import {
 } from "./actions";
 
 // Supabase pode ser configurado com OTP de 6, 7 ou 8 dígitos.
-// O padrão do projeto Conccord é 8 (o Supabase de Arthur enviou 8 dígitos).
+// O padrão do projeto Circly é 8 (o Supabase de Arthur enviou 8 dígitos).
 const OTP_LENGTH = 8;
 
 export function VerificarForm({ email }: { email: string }) {
@@ -25,6 +25,26 @@ export function VerificarForm({ email }: { email: string }) {
     VerifyState,
     FormData
   >(resendCode, null);
+
+  // Timer de reenvio (segundos restantes). Alimentado pelo `retryAfter`
+  // que a server action devolve quando bate no rate limit.
+  const [cooldown, setCooldown] = React.useState(0);
+
+  React.useEffect(() => {
+    if (resendState?.retryAfter && resendState.retryAfter > 0) {
+      setCooldown(resendState.retryAfter);
+    }
+  }, [resendState]);
+
+  React.useEffect(() => {
+    if (cooldown <= 0) return;
+    const id = setInterval(() => {
+      setCooldown((c) => Math.max(0, c - 1));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [cooldown]);
+
+  const canResend = !resending && cooldown === 0;
 
   return (
     <div className="space-y-6">
@@ -51,20 +71,35 @@ export function VerificarForm({ email }: { email: string }) {
         </Button>
       </form>
 
-      <form action={resendAction} className="flex items-center gap-3 text-sm">
+      <form
+        action={resendAction}
+        className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm"
+      >
         <input type="hidden" name="email" value={email} />
         <span className="text-text-muted">Não recebeu?</span>
         <button
           type="submit"
-          disabled={resending}
-          className="text-text-secondary underline underline-offset-2 hover:text-text-primary disabled:opacity-50"
+          disabled={!canResend}
+          className="text-text-secondary underline underline-offset-2 hover:text-text-primary disabled:no-underline disabled:opacity-50"
         >
-          {resending ? "Reenviando..." : "Reenviar código"}
+          {resending
+            ? "Reenviando..."
+            : cooldown > 0
+              ? `Reenviar em ${formatCooldown(cooldown)}`
+              : "Reenviar código"}
         </button>
-        {resendState?.error && (
+        {resendState?.error && cooldown === 0 && (
           <span className="text-danger">{resendState.error}</span>
         )}
       </form>
     </div>
   );
+}
+
+function formatCooldown(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  const min = Math.floor(seconds / 60);
+  const sec = seconds % 60;
+  if (sec === 0) return `${min}min`;
+  return `${min}min ${sec.toString().padStart(2, "0")}s`;
 }
