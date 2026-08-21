@@ -85,6 +85,10 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
+  // Dynamic island / notches / bordas curvas: sem `cover`, o browser aplica
+  // margem preta em vez de estender o conteúdo. Combinado com `env(safe-area-*)`
+  // nos elementos fixos abaixo, dá pra chegar rente às bordas sem esconder UI.
+  viewportFit: "cover",
 };
 
 export default async function RootLayout({

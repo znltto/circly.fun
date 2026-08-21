@@ -222,7 +222,7 @@ export function HelpBubble() {
           )}
         >
           {/* -------- Header -------- */}
-          <header className="relative flex items-center justify-between border-b border-border bg-surface-raised/50 px-4 py-3">
+          <header className="relative flex items-center justify-between border-b border-border bg-surface-raised/50 px-4 py-3 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)] md:pt-3">
             {/* Barra lime no topo */}
             <span
               aria-hidden

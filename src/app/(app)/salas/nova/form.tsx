@@ -244,7 +244,7 @@ export function NovaSalaForm({ appUrl }: { appUrl: string }) {
         )}
       </SectionCard>
 
-      <div className="sticky bottom-4 z-10 -mx-2 rounded-lg border border-border/60 bg-surface/95 p-3 shadow-lg shadow-black/30 backdrop-blur">
+      <div className="sticky bottom-[calc(env(safe-area-inset-bottom,0px)+1rem)] z-10 -mx-2 rounded-lg border border-border/60 bg-surface/95 p-3 shadow-lg shadow-black/30 backdrop-blur">
         <Button
           type="submit"
           size="lg"

@@ -109,7 +109,7 @@ export function AppShell({ user, isAdmin = false, children }: AppShellProps) {
         </aside>
 
         {/* Header mobile — brand + seletor de idioma */}
-        <header className="fixed inset-x-0 top-0 z-30 flex items-center justify-between border-b border-border bg-background/95 px-4 py-2.5 backdrop-blur md:hidden">
+        <header className="fixed inset-x-0 top-0 z-30 flex items-center justify-between border-b border-border bg-background/95 px-4 pt-[calc(env(safe-area-inset-top,0px)+0.625rem)] pb-2.5 backdrop-blur md:hidden">
           <Link
             href="/inicio"
             className="flex items-center gap-2 rounded-md"
@@ -124,8 +124,10 @@ export function AppShell({ user, isAdmin = false, children }: AppShellProps) {
           </div>
         </header>
 
-        {/* Conteúdo */}
-        <main className="flex-1 pb-mobile-nav pt-14 md:pt-0">{children}</main>
+        {/* Conteúdo — pt maior no mobile pra compensar header + safe-area-top */}
+        <main className="flex-1 pb-mobile-nav pt-[calc(env(safe-area-inset-top,0px)+3.5rem)] md:pt-0">
+          {children}
+        </main>
 
         {/* Nav mobile */}
         <MobileNav />

@@ -40,7 +40,7 @@ export function MeetingToasts() {
     <div
       role="region"
       aria-label="Notificações da sala"
-      className="pointer-events-none fixed left-1/2 top-16 z-40 flex w-[min(28rem,calc(100vw-1.5rem))] -translate-x-1/2 flex-col gap-2"
+      className="pointer-events-none fixed left-1/2 top-[calc(env(safe-area-inset-top,0px)+4rem)] z-40 flex w-[min(28rem,calc(100vw-1.5rem))] -translate-x-1/2 flex-col gap-2"
     >
       {toasts.map((t) => {
         const Icon = ICONS[t.tone];

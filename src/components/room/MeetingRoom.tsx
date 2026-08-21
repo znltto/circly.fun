@@ -372,7 +372,7 @@ function MeetingChrome({
     <>
       <MeetingToasts />
       <HostSync />
-      <header className="flex items-center justify-between gap-3 border-b border-border px-3 py-2.5 sm:px-4">
+      <header className="flex items-center justify-between gap-3 border-b border-border px-3 py-2.5 pt-[calc(env(safe-area-inset-top,0px)+0.625rem)] pl-[max(env(safe-area-inset-left,0px),0.75rem)] pr-[max(env(safe-area-inset-right,0px),0.75rem)] sm:px-4 sm:pl-[max(env(safe-area-inset-left,0px),1rem)] sm:pr-[max(env(safe-area-inset-right,0px),1rem)]">
         <Link
           href="/"
           className="flex shrink-0 items-center gap-2 rounded-md"

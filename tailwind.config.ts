@@ -54,6 +54,16 @@ const config: Config = {
       transitionTimingFunction: {
         "out-quart": "cubic-bezier(0.25, 1, 0.5, 1)",
       },
+      // Utilitários para respeitar dynamic island / notch / home indicator.
+      // Uso: `pt-safe`, `pb-safe`, `pl-safe`, `pr-safe` (padding zero em
+      // desktop, ajusta em iOS/Android com bordas). Combine com um valor
+      // fixo via calc, ex.: `pb-[calc(theme(spacing.4)+env(safe-area-inset-bottom))]`.
+      spacing: {
+        "safe-top": "env(safe-area-inset-top, 0px)",
+        "safe-bottom": "env(safe-area-inset-bottom, 0px)",
+        "safe-left": "env(safe-area-inset-left, 0px)",
+        "safe-right": "env(safe-area-inset-right, 0px)",
+      },
     },
   },
   plugins: [],

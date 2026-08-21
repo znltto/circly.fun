@@ -44,7 +44,7 @@ export default async function Home() {
 
   return (
     <main className="relative min-h-screen overflow-x-clip">
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 sm:py-6">
+      <header className="mx-auto flex max-w-6xl items-center justify-between px-4 pt-[calc(env(safe-area-inset-top,0px)+1rem)] pb-4 sm:px-6 sm:pt-[calc(env(safe-area-inset-top,0px)+1.5rem)] sm:pb-6">
         <Link
           href="/"
           className="flex items-center gap-2.5 rounded-md"
