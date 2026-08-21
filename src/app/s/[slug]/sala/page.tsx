@@ -8,6 +8,7 @@ import { Wordmark } from "@/components/brand/Wordmark";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { RoomController } from "@/components/room/RoomController";
+import { isAdminEmail } from "@/lib/admin";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -96,6 +97,7 @@ export default async function SalaPage({ params, searchParams }: PageProps) {
       roomTitle={roomTitle}
       participantCount={participantCount}
       requiresRecordingConsent={requiresRecordingConsent}
+      isAdmin={isAdminEmail(user?.email)}
     />
   );
 }

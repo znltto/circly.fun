@@ -22,8 +22,7 @@ import { ParticipantsList } from "./ParticipantsList";
 import { InRoomChat } from "./InRoomChat";
 import { MeetingProvider } from "./meeting-context";
 import { RoomSoundEffects } from "./RoomSoundEffects";
-import { RecordingControl } from "./RecordingControl";
-import { RecordingIndicator } from "./RecordingIndicator";
+import { BrowserRecorder } from "./BrowserRecorder";
 import {
   createFilteredStream,
   type FilteredStreamHandle,
@@ -38,6 +37,7 @@ interface MeetingRoomProps {
   identity: string;
   displayName: string;
   isHost: boolean;
+  isAdmin?: boolean;
   onLeave: () => void;
   audio: { enabled: boolean; deviceId?: string };
   video: { enabled: boolean; deviceId?: string };
@@ -79,6 +79,7 @@ export function MeetingRoom({
   identity,
   displayName,
   isHost,
+  isAdmin = false,
   onLeave,
   audio,
   video,
@@ -133,7 +134,7 @@ export function MeetingRoom({
       className="flex h-screen flex-col bg-background"
     >
       <MeetingProvider
-        value={{ roomSlug, isHost, localIdentity: identity }}
+        value={{ roomSlug, isHost, isAdmin, localIdentity: identity }}
       >
         <RoomAudioRenderer />
         <ConnectionStateToast />
@@ -333,13 +334,12 @@ function MeetingChrome({
             <span className="h-1.5 w-1.5 rounded-full bg-danger" />
             Ao vivo
           </span>
-          <RecordingIndicator />
           <span className="hidden text-sm text-text-primary md:block">
             {roomTitle}
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <RecordingControl />
+          <BrowserRecorder />
           <span className="font-mono text-xs text-text-muted">
             /s/{roomSlug}
           </span>

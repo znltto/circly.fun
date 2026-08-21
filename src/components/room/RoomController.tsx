@@ -19,6 +19,7 @@ interface RoomControllerProps {
   participantCount: number;
   /** Se true, exige modal de consentimento de gravação antes de conectar. */
   requiresRecordingConsent?: boolean;
+  isAdmin?: boolean;
 }
 
 interface TokenResponse {
@@ -72,6 +73,7 @@ export function RoomController({
   roomTitle,
   participantCount,
   requiresRecordingConsent = false,
+  isAdmin = false,
 }: RoomControllerProps) {
   const router = useRouter();
   const [phase, setPhase] = React.useState<Phase>({ kind: "preview" });
@@ -150,6 +152,7 @@ export function RoomController({
         identity={phase.data.identity}
         displayName={displayName || phase.data.identity}
         isHost={phase.data.role === "host"}
+        isAdmin={isAdmin}
         onLeave={handleLeave}
         audio={{
           enabled: phase.settings.audioEnabled,

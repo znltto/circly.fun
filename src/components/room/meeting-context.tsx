@@ -5,6 +5,7 @@ import * as React from "react";
 interface MeetingContextValue {
   roomSlug: string;
   isHost: boolean;
+  isAdmin: boolean;
   localIdentity: string;
 }
 
