@@ -32,7 +32,13 @@ const items: NavItem[] = [
   { href: "/admin", labelKey: "nav.admin", icon: Shield, admin: true },
 ];
 
-export function SidebarNav({ isAdmin = false }: { isAdmin?: boolean }) {
+export function SidebarNav({
+  isAdmin = false,
+  unreadMessages = 0,
+}: {
+  isAdmin?: boolean;
+  unreadMessages?: number;
+}) {
   const pathname = usePathname();
   const { t } = useI18n();
 
@@ -47,6 +53,8 @@ export function SidebarNav({ isAdmin = false }: { isAdmin?: boolean }) {
         // Renderiza SEMPRE (evita hydration mismatch) e esconde via CSS
         // quando o item é admin-only e o viewer não é admin.
         const hidden = admin && !isAdmin;
+
+        const badge = href === "/mensagens" ? unreadMessages : 0;
 
         return (
           <Link
@@ -71,7 +79,15 @@ export function SidebarNav({ isAdmin = false }: { isAdmin?: boolean }) {
               />
             )}
             <Icon className="h-4 w-4 shrink-0" />
-            <span>{t(labelKey)}</span>
+            <span className="flex-1">{t(labelKey)}</span>
+            {badge > 0 && (
+              <span
+                aria-label={`${badge} não lidas`}
+                className="ml-auto flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-brand px-1 text-[10px] font-semibold leading-none text-brand-fg"
+              >
+                {badge > 99 ? "99+" : badge}
+              </span>
+            )}
           </Link>
         );
       })}

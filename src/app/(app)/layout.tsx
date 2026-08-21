@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/layout/AppShell";
 import { isAdminEmail } from "@/lib/admin";
+import { countTotalUnread } from "@/lib/dms/queries";
 
 export default async function AppLayout({
   children,
@@ -36,9 +37,10 @@ export default async function AppLayout({
   }
 
   const isAdmin = isAdminEmail(user.email);
+  const initialUnread = await countTotalUnread();
 
   return (
-    <AppShell user={profile} isAdmin={isAdmin}>
+    <AppShell user={profile} isAdmin={isAdmin} initialUnread={initialUnread}>
       {children}
     </AppShell>
   );

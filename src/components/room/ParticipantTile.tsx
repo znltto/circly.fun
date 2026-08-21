@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import {
   useTrackRefContext,
   VideoTrack,
@@ -130,8 +131,37 @@ function HostMenu({
   const [pending, setPending] = React.useState<string | null>(null);
   const [confirmKick, setConfirmKick] = React.useState(false);
   const [confirmTransfer, setConfirmTransfer] = React.useState(false);
+  const buttonRef = React.useRef<HTMLButtonElement>(null);
   const menuRef = React.useRef<HTMLDivElement>(null);
+  const [menuPos, setMenuPos] = React.useState<{
+    top: number;
+    right: number;
+  } | null>(null);
   const { emitToast } = useMeeting();
+
+  // Recalcula a posição do menu (portal) sempre que abre + em resize/scroll.
+  // Fica em `position: fixed` ancorado no botão pra escapar do overflow-hidden
+  // do tile pai.
+  const updatePosition = React.useCallback(() => {
+    const btn = buttonRef.current;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    setMenuPos({
+      top: rect.bottom + 6,
+      right: window.innerWidth - rect.right,
+    });
+  }, []);
+
+  React.useEffect(() => {
+    if (!open) return;
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [open, updatePosition]);
 
   async function transferHost() {
     setOpen(false);
@@ -171,8 +201,11 @@ function HostMenu({
     if (!open) return;
     // pointerdown pega mouse + toque; capture pega antes que o item do menu
     // engula o evento (fecha se clicou fora, mantém se clicou dentro).
+    // Como o menu vive num portal, precisa checar botão E menu.
     function onDown(e: PointerEvent) {
-      if (menuRef.current?.contains(e.target as Node)) return;
+      const target = e.target as Node;
+      if (buttonRef.current?.contains(target)) return;
+      if (menuRef.current?.contains(target)) return;
       setOpen(false);
     }
     document.addEventListener("pointerdown", onDown, true);
@@ -230,9 +263,69 @@ function HostMenu({
     }
   }
 
+  const menuNode =
+    open && menuPos && typeof document !== "undefined" ? (
+      <div
+        ref={menuRef}
+        role="menu"
+        style={{
+          position: "fixed",
+          top: menuPos.top,
+          right: menuPos.right,
+          zIndex: 60,
+        }}
+        className="w-[min(14rem,calc(100vw-1.5rem))] max-w-[14rem] rounded-md border border-border bg-surface-raised p-1 shadow-lg shadow-black/40"
+      >
+        <MenuItem
+          icon={<MicOffIcon className="h-3.5 w-3.5" />}
+          label="Silenciar microfone"
+          loading={pending === "mute-audio"}
+          onClick={() => moderate("mute-audio")}
+        />
+        <MenuItem
+          icon={<VideoOff className="h-3.5 w-3.5" />}
+          label="Desligar câmera"
+          loading={pending === "mute-video"}
+          onClick={() => moderate("mute-video")}
+        />
+        <MenuItem
+          icon={<ScreenShareOff className="h-3.5 w-3.5" />}
+          label="Parar compartilhamento"
+          loading={pending === "mute-screen"}
+          onClick={() => moderate("mute-screen")}
+        />
+        {canTransferHost && (
+          <>
+            <div className="my-1 h-px bg-border" />
+            <MenuItem
+              icon={<Crown className="h-3.5 w-3.5" />}
+              label="Passar controle da sala"
+              loading={pending === "transfer"}
+              onClick={() => {
+                setOpen(false);
+                setConfirmTransfer(true);
+              }}
+            />
+          </>
+        )}
+        <div className="my-1 h-px bg-border" />
+        <MenuItem
+          icon={<UserX className="h-3.5 w-3.5" />}
+          label="Remover da sala"
+          loading={pending === "kick"}
+          onClick={() => {
+            setOpen(false);
+            setConfirmKick(true);
+          }}
+          danger
+        />
+      </div>
+    ) : null;
+
   return (
-    <div ref={menuRef} className="relative">
+    <>
       <button
+        ref={buttonRef}
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="menu"
         aria-expanded={open}
@@ -242,56 +335,9 @@ function HostMenu({
         <MoreVertical className="h-4 w-4" />
       </button>
 
-      {open && (
-        <div
-          role="menu"
-          className="absolute right-0 top-10 z-20 w-[min(14rem,calc(100vw-1.5rem))] max-w-[14rem] rounded-md border border-border bg-surface-raised p-1 shadow-lg shadow-black/40"
-        >
-          <MenuItem
-            icon={<MicOffIcon className="h-3.5 w-3.5" />}
-            label="Silenciar microfone"
-            loading={pending === "mute-audio"}
-            onClick={() => moderate("mute-audio")}
-          />
-          <MenuItem
-            icon={<VideoOff className="h-3.5 w-3.5" />}
-            label="Desligar câmera"
-            loading={pending === "mute-video"}
-            onClick={() => moderate("mute-video")}
-          />
-          <MenuItem
-            icon={<ScreenShareOff className="h-3.5 w-3.5" />}
-            label="Parar compartilhamento"
-            loading={pending === "mute-screen"}
-            onClick={() => moderate("mute-screen")}
-          />
-          {canTransferHost && (
-            <>
-              <div className="my-1 h-px bg-border" />
-              <MenuItem
-                icon={<Crown className="h-3.5 w-3.5" />}
-                label="Passar controle da sala"
-                loading={pending === "transfer"}
-                onClick={() => {
-                  setOpen(false);
-                  setConfirmTransfer(true);
-                }}
-              />
-            </>
-          )}
-          <div className="my-1 h-px bg-border" />
-          <MenuItem
-            icon={<UserX className="h-3.5 w-3.5" />}
-            label="Remover da sala"
-            loading={pending === "kick"}
-            onClick={() => {
-              setOpen(false);
-              setConfirmKick(true);
-            }}
-            danger
-          />
-        </div>
-      )}
+      {/* Portal pro body — evita que overflow-hidden do tile pai (necessário
+          pra cortar o vídeo) corte o menu. z-index alto pra ficar sobre CallControls. */}
+      {menuNode && createPortal(menuNode, document.body)}
 
       {confirmKick && (
         <ConfirmKickDialog
@@ -310,7 +356,7 @@ function HostMenu({
           onConfirm={transferHost}
         />
       )}
-    </div>
+    </>
   );
 }
 

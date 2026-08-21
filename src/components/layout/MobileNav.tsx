@@ -19,7 +19,11 @@ const items: Array<{
   { href: "/conta", labelKey: "nav.account", icon: User },
 ];
 
-export function MobileNav() {
+export function MobileNav({
+  unreadMessages = 0,
+}: {
+  unreadMessages?: number;
+}) {
   const pathname = usePathname();
   const { t } = useI18n();
 
@@ -35,6 +39,8 @@ export function MobileNav() {
               ? pathname === href
               : pathname === href || pathname.startsWith(`${href}/`);
 
+          const badge = href === "/mensagens" ? unreadMessages : 0;
+
           return (
             <li key={href} className="flex-1">
               <Link
@@ -45,7 +51,17 @@ export function MobileNav() {
                   active ? "text-brand" : "text-text-secondary"
                 )}
               >
-                <Icon className="h-5 w-5" />
+                <span className="relative">
+                  <Icon className="h-5 w-5" />
+                  {badge > 0 && (
+                    <span
+                      aria-label={`${badge} não lidas`}
+                      className="absolute -right-2 -top-1 flex h-3.5 min-w-[0.875rem] items-center justify-center rounded-full bg-brand px-1 text-[9px] font-semibold leading-none text-brand-fg"
+                    >
+                      {badge > 9 ? "9+" : badge}
+                    </span>
+                  )}
+                </span>
                 {t(labelKey)}
               </Link>
             </li>

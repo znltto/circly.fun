@@ -1,6 +1,8 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { BrandMark } from "@/components/brand/BrandMark";
 import { Wordmark } from "@/components/brand/Wordmark";
 import { UserAvatar } from "@/components/ui/Avatar";
@@ -23,12 +25,49 @@ interface AppShellProps {
     status_emoji?: string | null;
   };
   isAdmin?: boolean;
+  /** Contagem inicial de DMs não lidas (SSR). */
+  initialUnread?: number;
   children: React.ReactNode;
 }
 
-export function AppShell({ user, isAdmin = false, children }: AppShellProps) {
+export function AppShell({
+  user,
+  isAdmin = false,
+  initialUnread = 0,
+  children,
+}: AppShellProps) {
   const { t } = useI18n();
+  const pathname = usePathname();
   const hasStatus = !!(user.status_message || user.status_emoji);
+
+  const [unread, setUnread] = React.useState(initialUnread);
+
+  // Polling leve (20s) + refetch quando o usuário volta pra aba ou muda de
+  // rota. Rota nova = provável leitura ou envio de mensagem; melhor sincronizar.
+  React.useEffect(() => {
+    let cancelled = false;
+    async function fetchUnread() {
+      try {
+        const res = await fetch("/api/dms/unread", { cache: "no-store" });
+        if (!res.ok) return;
+        const body = (await res.json()) as { count?: number };
+        if (!cancelled && typeof body.count === "number") setUnread(body.count);
+      } catch {
+        // ignora — rede pode falhar; próxima tentativa cobre
+      }
+    }
+    void fetchUnread();
+    const interval = window.setInterval(fetchUnread, 20_000);
+    function onVisibility() {
+      if (document.visibilityState === "visible") void fetchUnread();
+    }
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [pathname]);
 
   return (
     <PresenceProvider selfId={user.id}>
@@ -52,7 +91,7 @@ export function AppShell({ user, isAdmin = false, children }: AppShellProps) {
             <InstallButton />
           </div>
 
-          <SidebarNav isAdmin={isAdmin} />
+          <SidebarNav isAdmin={isAdmin} unreadMessages={unread} />
 
           <div className="mt-auto space-y-2">
             <div className="flex items-start gap-3 rounded-md border border-border bg-surface p-3">
@@ -130,7 +169,7 @@ export function AppShell({ user, isAdmin = false, children }: AppShellProps) {
         </main>
 
         {/* Nav mobile */}
-        <MobileNav />
+        <MobileNav unreadMessages={unread} />
       </div>
     </PresenceProvider>
   );

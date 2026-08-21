@@ -206,6 +206,13 @@ export function CallControls({
         resolution: VideoPresets.h1080.resolution,
         systemAudio: "include",
         selfBrowserSurface: "exclude",
+        // Chrome-only: silencia LOCALMENTE o áudio que está sendo compartilhado,
+        // pra o compartilhador não ouvir duplicado (o participante remoto
+        // continua ouvindo normal pelo LiveKit). Não resolve o loop de eco
+        // remoto (voz do outro voltando pelo speaker do compartilhador), mas
+        // ao menos evita duplicação local. Pra eco real, precisa fones ou
+        // compartilhar aba específica.
+        suppressLocalAudioPlayback: true,
       } as Parameters<
         typeof localParticipant.setScreenShareEnabled
       >[1];
@@ -233,6 +240,15 @@ export function CallControls({
           duration: 6000,
           message:
             "Compartilhando sem áudio. Pra pegar som do sistema, escolha 'Tela inteira' e marque 'Compartilhar áudio do sistema'.",
+        });
+      } else {
+        // Compartilhando COM áudio → risco alto de loop (voz do outro sai
+        // pelo seu speaker e é recapturada). Aviso preventivo.
+        emitToast?.({
+          tone: "info",
+          duration: 8000,
+          message:
+            "Compartilhando com áudio. Pra evitar eco, use fones — ou compartilhe uma aba específica em vez da tela inteira.",
         });
       }
     } catch (err) {
