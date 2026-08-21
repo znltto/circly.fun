@@ -27,11 +27,19 @@ function notify() {
   for (const fn of listeners) fn();
 }
 
+function subscribe(fn: () => void) {
+  ensureInit();
+  listeners.add(fn);
+  return () => {
+    listeners.delete(fn);
+  };
+}
+
 function isStandaloneDisplay(): boolean {
   if (typeof window === "undefined") return false;
   const iosStandalone =
-    // Safari iOS expõe navigator.standalone
-    (window.navigator as unknown as { standalone?: boolean }).standalone === true;
+    (window.navigator as unknown as { standalone?: boolean }).standalone ===
+    true;
   const displayModeStandalone = window.matchMedia(
     "(display-mode: standalone)"
   ).matches;
@@ -42,7 +50,6 @@ function detectIOS(): boolean {
   if (typeof navigator === "undefined") return false;
   const ua = navigator.userAgent;
   const isiOS = /iPad|iPhone|iPod/.test(ua);
-  // iPadOS 13+ se identifica como Mac; detecta touch pra distinguir
   const iPadOS =
     ua.includes("Macintosh") &&
     typeof navigator.maxTouchPoints === "number" &&
@@ -69,51 +76,52 @@ function ensureInit() {
 }
 
 export interface InstallState {
-  /** Prompt nativo disponível (Chrome/Edge Android/Desktop). */
   canPrompt: boolean;
-  /** App já rodando em modo standalone / PWA instalado. */
   isStandalone: boolean;
-  /** Sistema é iOS — precisa de instruções manuais (Safari → Compartilhar). */
   isIOS: boolean;
-  /** Marcou como já instalado durante esta sessão. */
   installed: boolean;
 }
+
+// Snapshot estável — precisa retornar a MESMA referência quando nada mudou,
+// senão useSyncExternalStore entra em loop.
+let cachedSnapshot: InstallState = {
+  canPrompt: false,
+  isStandalone: false,
+  isIOS: false,
+  installed: false,
+};
+
+function getSnapshot(): InstallState {
+  const next: InstallState = {
+    canPrompt: !!deferred,
+    isStandalone: isStandaloneDisplay(),
+    isIOS: detectIOS(),
+    installed,
+  };
+  const same =
+    cachedSnapshot.canPrompt === next.canPrompt &&
+    cachedSnapshot.isStandalone === next.isStandalone &&
+    cachedSnapshot.isIOS === next.isIOS &&
+    cachedSnapshot.installed === next.installed;
+  if (!same) cachedSnapshot = next;
+  return cachedSnapshot;
+}
+
+const SERVER_SNAPSHOT: InstallState = {
+  canPrompt: false,
+  isStandalone: false,
+  isIOS: false,
+  installed: false,
+};
 
 export function useInstallState(): InstallState & {
   install: () => Promise<"accepted" | "dismissed" | "unsupported">;
 } {
-  const [, force] = React.useReducer((x: number) => x + 1, 0);
-  const [snapshot, setSnapshot] = React.useState<InstallState>(() => ({
-    canPrompt: false,
-    isStandalone: false,
-    isIOS: false,
-    installed: false,
-  }));
-
-  React.useEffect(() => {
-    ensureInit();
-    const fn = () => force();
-    listeners.add(fn);
-    setSnapshot({
-      canPrompt: !!deferred,
-      isStandalone: isStandaloneDisplay(),
-      isIOS: detectIOS(),
-      installed,
-    });
-    return () => {
-      listeners.delete(fn);
-    };
-  }, []);
-
-  // Recomputa quando listeners disparam
-  React.useEffect(() => {
-    setSnapshot({
-      canPrompt: !!deferred,
-      isStandalone: isStandaloneDisplay(),
-      isIOS: detectIOS(),
-      installed,
-    });
-  });
+  const state = React.useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    () => SERVER_SNAPSHOT
+  );
 
   const install = React.useCallback(async () => {
     if (!deferred) return "unsupported" as const;
@@ -128,5 +136,5 @@ export function useInstallState(): InstallState & {
     }
   }, []);
 
-  return { ...snapshot, install };
+  return { ...state, install };
 }

@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import { BrandMark } from "@/components/brand/BrandMark";
 import { Wordmark } from "@/components/brand/Wordmark";
-import { CcoMascot } from "@/components/brand/CcoMascot";
 import { Button } from "@/components/ui/Button";
 import { UserAvatar } from "@/components/ui/Avatar";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";

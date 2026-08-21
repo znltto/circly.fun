@@ -122,6 +122,18 @@ export type Dictionary = {
     iosClose: string;
     alreadyInstalled: string;
   };
+  help: {
+    openLabel: string;
+    closeLabel: string;
+    title: string;
+    subtitle: string;
+    welcome: string;
+    placeholder: string;
+    sendLabel: string;
+    disclaimer: string;
+    unavailable: string;
+    networkError: string;
+  };
 };
 
 const pt: Dictionary = {
@@ -246,6 +258,19 @@ const pt: Dictionary = {
     iosStep3: "Confirme em \"Adicionar\" no canto superior direito.",
     iosClose: "Fechar",
     alreadyInstalled: "App instalado",
+  },
+  help: {
+    openLabel: "Abrir ajuda",
+    closeLabel: "Fechar ajuda",
+    title: "Ajuda",
+    subtitle: "Dúvida, sugestão ou problema.",
+    welcome:
+      "Escreve aí o que tá travando ou o que você queria — sala, chat, chamada, o que for. Se preferir mandar sugestão ou reclamar, também vale.",
+    placeholder: "Escreva sua mensagem…",
+    sendLabel: "Enviar",
+    disclaimer: "Não compartilhe senhas nem códigos.",
+    unavailable: "Resposta indisponível.",
+    networkError: "Erro de rede.",
   },
 };
 
@@ -372,6 +397,19 @@ const es: Dictionary = {
     iosClose: "Cerrar",
     alreadyInstalled: "App instalada",
   },
+  help: {
+    openLabel: "Abrir ayuda",
+    closeLabel: "Cerrar ayuda",
+    title: "Ayuda",
+    subtitle: "Duda, sugerencia o problema.",
+    welcome:
+      "Escribe qué te está frenando o qué quieres — sala, chat, llamada, lo que sea. Si prefieres sugerir o quejarte, también sirve.",
+    placeholder: "Escribe tu mensaje…",
+    sendLabel: "Enviar",
+    disclaimer: "No compartas contraseñas ni códigos.",
+    unavailable: "Respuesta no disponible.",
+    networkError: "Error de red.",
+  },
 };
 
 const en: Dictionary = {
@@ -496,6 +534,19 @@ const en: Dictionary = {
     iosStep3: "Confirm on \"Add\" in the top right.",
     iosClose: "Close",
     alreadyInstalled: "App installed",
+  },
+  help: {
+    openLabel: "Open help",
+    closeLabel: "Close help",
+    title: "Help",
+    subtitle: "Question, suggestion or issue.",
+    welcome:
+      "Write what's blocking you or what you need — room, chat, call, whatever. If you'd rather send a suggestion or a complaint, that works too.",
+    placeholder: "Type your message…",
+    sendLabel: "Send",
+    disclaimer: "Never share passwords or codes.",
+    unavailable: "Response unavailable.",
+    networkError: "Network error.",
   },
 };
 

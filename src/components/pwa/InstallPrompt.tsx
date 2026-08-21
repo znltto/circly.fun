@@ -2,50 +2,29 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Download, X } from "lucide-react";
-
-interface BeforeInstallPromptEvent extends Event {
-  readonly platforms: string[];
-  readonly userChoice: Promise<{
-    outcome: "accepted" | "dismissed";
-    platform: string;
-  }>;
-  prompt: () => Promise<void>;
-}
+import { useI18n } from "@/lib/i18n/context";
+import { useInstallState } from "@/lib/pwa/install";
 
 const DISMISS_KEY = "circly:install-dismissed";
 const DISMISS_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
 export function InstallPrompt() {
-  const [deferredEvent, setDeferredEvent] =
-    useState<BeforeInstallPromptEvent | null>(null);
-  const [visible, setVisible] = useState(false);
+  const { t } = useI18n();
+  const { canPrompt, isStandalone, install } = useInstallState();
+  const [dismissed, setDismissed] = useState(true);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-
-    // Se ainda dentro da janela de "dispensado", não faz nada
     try {
       const raw = window.localStorage.getItem(DISMISS_KEY);
       if (raw) {
         const until = Number.parseInt(raw, 10);
-        if (Number.isFinite(until) && Date.now() < until) {
-          return;
-        }
+        if (Number.isFinite(until) && Date.now() < until) return;
       }
+      setDismissed(false);
     } catch {
-      /* localStorage indisponível — segue */
+      setDismissed(false);
     }
-
-    const handler = (event: Event) => {
-      event.preventDefault();
-      setDeferredEvent(event as BeforeInstallPromptEvent);
-      setVisible(true);
-    };
-
-    window.addEventListener("beforeinstallprompt", handler);
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handler);
-    };
   }, []);
 
   const dismiss = useCallback(() => {
@@ -57,44 +36,35 @@ export function InstallPrompt() {
     } catch {
       /* noop */
     }
-    setVisible(false);
-    setDeferredEvent(null);
+    setDismissed(true);
   }, []);
 
-  const install = useCallback(async () => {
-    if (!deferredEvent) return;
-    try {
-      await deferredEvent.prompt();
-      await deferredEvent.userChoice;
-    } catch {
-      /* usuário fechou / plataforma cancelou */
-    } finally {
-      setVisible(false);
-      setDeferredEvent(null);
-    }
-  }, [deferredEvent]);
+  const trigger = useCallback(async () => {
+    const outcome = await install();
+    if (outcome === "accepted") setDismissed(true);
+  }, [install]);
 
-  if (!visible || !deferredEvent) return null;
+  if (dismissed || isStandalone || !canPrompt) return null;
 
   return (
     <div
       role="dialog"
-      aria-label="Instalar Circly"
-      className="fixed bottom-24 md:bottom-6 right-4 z-30 bg-surface border border-border rounded-full px-4 py-2 shadow-lg text-sm flex items-center gap-2"
+      aria-label={t("install.ariaLabel")}
+      className="fixed bottom-24 md:bottom-6 right-4 z-30 flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 text-sm shadow-lg"
     >
       <button
         type="button"
-        onClick={install}
+        onClick={trigger}
         className="flex items-center gap-2 text-text-primary"
       >
         <Download className="h-4 w-4 text-brand" aria-hidden="true" />
-        <span>Instalar Circly</span>
+        <span>{t("install.ctaLong")}</span>
       </button>
       <button
         type="button"
         onClick={dismiss}
-        aria-label="Dispensar"
-        className="text-text-muted hover:text-text-primary transition-colors"
+        aria-label={t("install.dismiss")}
+        className="text-text-muted transition-colors hover:text-text-primary"
       >
         <X className="h-4 w-4" aria-hidden="true" />
       </button>

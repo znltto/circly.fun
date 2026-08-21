@@ -45,6 +45,12 @@ const START_OF_MONTH = () => {
   return d.toISOString();
 };
 
+/**
+ * Contador genérico com filtro opcional. Usa `any` pro builder porque o
+ * tipo real do supabase-js muda a cada `.eq()`/`.gte()`, e aqui a gente
+ * só precisa da API fluente encadeada.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function count(table: string, filter?: (q: any) => any): Promise<number> {
   const admin = createAdminClient();
   let q = admin.from(table).select("id", { count: "exact", head: true });

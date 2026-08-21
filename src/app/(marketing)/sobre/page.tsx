@@ -55,7 +55,7 @@ export default function SobrePage() {
           <p className="text-lg">
             O Circly é uma sala privada de videochamada, feita pra ser usada por
             poucas pessoas — família, amigos próximos, um time pequeno. Nada de
-            comunidade, nada de fila de espera, nada de "canal público".
+            comunidade, nada de fila de espera, nada de &ldquo;canal público&rdquo;.
           </p>
 
           <section className="space-y-3">
@@ -110,7 +110,7 @@ export default function SobrePage() {
               O que ele não faz
             </h2>
             <p>
-              Não tem "servidor" nem "canal" no estilo Discord. Não tem
+              Não tem &ldquo;servidor&rdquo; nem &ldquo;canal&rdquo; no estilo Discord. Não tem
               publicação, seguidores, feed ou timeline. Não tem gravação
               automática. Não tem monetização, anúncio, coleta de dado pra
               vender. É um app pessoal, feito com carinho, pra ser usado

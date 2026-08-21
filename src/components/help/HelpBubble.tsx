@@ -1,9 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { X, Send, Sparkles } from "lucide-react";
-import { BrandMark } from "@/components/brand/BrandMark";
+import { X, Send, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n/context";
 
 interface ChatMessage {
   id: string;
@@ -11,26 +11,34 @@ interface ChatMessage {
   content: string;
 }
 
-const WELCOME: ChatMessage = {
-  id: "welcome",
-  role: "assistant",
-  content:
-    "Oi! Sou o assistente do Circly. Posso tirar dúvidas sobre sala, chat, chamadas, o que precisar. Também aceito sugestões e reclamações — manda ver.",
-};
-
 /**
- * Bolha flutuante bottom-right + modal de chat com o assistente.
- * Usa a BrandMark oficial (não o mascote CCO) pra representar a IA.
+ * Bolha flutuante bottom-right + modal de ajuda/suporte.
  */
 export function HelpBubble() {
+  const { t } = useI18n();
   const [open, setOpen] = React.useState(false);
   const [rendered, setRendered] = React.useState(false); // controla mount durante animação
-  const [messages, setMessages] = React.useState<ChatMessage[]>([WELCOME]);
+  const welcomeMsg = React.useMemo<ChatMessage>(
+    () => ({ id: "welcome", role: "assistant", content: t("help.welcome") }),
+    [t]
+  );
+  const [messages, setMessages] = React.useState<ChatMessage[]>([welcomeMsg]);
   const [draft, setDraft] = React.useState("");
   const [sending, setSending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLTextAreaElement>(null);
+
+  // Atualiza a mensagem inicial se o usuário trocar o idioma e ainda não
+  // interagiu.
+  React.useEffect(() => {
+    setMessages((prev) => {
+      if (prev.length === 1 && prev[0].id === "welcome") {
+        return [welcomeMsg];
+      }
+      return prev;
+    });
+  }, [welcomeMsg]);
 
   // Coreografia: entrar → mount + tick de RAF pra transição pegar
   React.useEffect(() => {
@@ -103,7 +111,7 @@ export function HelpBubble() {
       };
 
       if (!res.ok || !body.text) {
-        setError(body.error ?? "Resposta indisponível.");
+        setError(body.error ?? t("help.unavailable"));
         return;
       }
 
@@ -112,7 +120,7 @@ export function HelpBubble() {
         { id: crypto.randomUUID(), role: "assistant", content: body.text! },
       ]);
     } catch {
-      setError("Erro de rede.");
+      setError(t("help.networkError"));
     } finally {
       setSending(false);
     }
@@ -132,44 +140,25 @@ export function HelpBubble() {
        * ------------------------------------------------------------ */}
       <button
         onClick={() => setOpen(true)}
-        aria-label="Abrir assistente Circly"
+        aria-label={t("help.openLabel")}
         aria-expanded={open}
         className={cn(
           "fixed bottom-4 right-4 z-40 md:bottom-6 md:right-6",
-          "group flex h-14 w-14 items-center justify-center rounded-full",
-          "border border-brand/40 bg-surface shadow-lg shadow-black/40",
-          "transition-all duration-300 ease-out-quart",
-          "hover:scale-110 hover:border-brand/70 hover:shadow-brand/20",
+          "group flex h-12 w-12 items-center justify-center rounded-full",
+          "border border-border bg-surface shadow-lg shadow-black/40",
+          "transition-all duration-200 ease-out-quart",
+          "hover:border-border/80 hover:bg-surface-hover",
           "active:scale-95",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
           open
             ? "pointer-events-none scale-50 opacity-0"
             : "scale-100 opacity-100"
         )}
       >
-        {/* halo pulsante externo */}
-        <span
+        <HelpCircle
+          className="h-5 w-5 text-text-secondary transition-colors group-hover:text-text-primary"
           aria-hidden
-          className="absolute inset-0 animate-ping rounded-full bg-brand/10"
-          style={{ animationDuration: "3s" }}
         />
-        {/* halo hover */}
-        <span
-          aria-hidden
-          className="absolute inset-0 rounded-full bg-brand/15 opacity-0 transition-opacity group-hover:opacity-100"
-        />
-
-        {/* Logo Circly (BrandMark) */}
-        <BrandMark className="relative h-7 w-7 transition-transform group-hover:rotate-12" />
-
-        {/* Dot verde "online" */}
-        <span
-          aria-hidden
-          className="absolute -right-0.5 -top-0.5 flex h-3 w-3 items-center justify-center"
-        >
-          <span className="absolute h-3 w-3 animate-ping rounded-full bg-success/60" />
-          <span className="relative h-2 w-2 rounded-full bg-success ring-2 ring-surface" />
-        </span>
       </button>
 
       {/* ------------------------------------------------------------
@@ -195,7 +184,7 @@ export function HelpBubble() {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Assistente Circly"
+          aria-label={t("help.title")}
           className={cn(
             "fixed z-40 flex flex-col",
             // Mobile: full-screen. Desktop: bottom-right panel
@@ -211,35 +200,24 @@ export function HelpBubble() {
           )}
         >
           {/* -------- Header -------- */}
-          <header className="relative flex items-center justify-between border-b border-border bg-surface-raised/50 px-4 py-3">
-            {/* Barra lime no topo */}
-            <span
-              aria-hidden
-              className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand/60 to-transparent"
-            />
-
+          <header className="flex items-center justify-between border-b border-border bg-surface-raised/50 px-4 py-3">
             <div className="flex items-center gap-3">
-              <div className="relative flex h-10 w-10 items-center justify-center rounded-full border border-brand/40 bg-background shadow-inner shadow-brand/10">
-                <BrandMark className="h-6 w-6" />
-                <span
-                  aria-hidden
-                  className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-success ring-2 ring-surface-raised"
-                />
+              <div className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background">
+                <HelpCircle className="h-4 w-4 text-text-secondary" aria-hidden />
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-medium text-text-primary">
-                  Assistente Circly
+                  {t("help.title")}
                 </p>
-                <p className="flex items-center gap-1 text-[10px] text-text-muted">
-                  <Sparkles className="h-2.5 w-2.5 text-brand" />
-                  Sempre online · Respondo por IA
+                <p className="text-[11px] text-text-muted">
+                  {t("help.subtitle")}
                 </p>
               </div>
             </div>
 
             <button
               onClick={() => setOpen(false)}
-              aria-label="Fechar assistente"
+              aria-label={t("help.closeLabel")}
               className="rounded-md p-1.5 text-text-secondary transition-colors hover:bg-surface-hover hover:text-text-primary"
             >
               <X className="h-4 w-4" />
@@ -280,7 +258,7 @@ export function HelpBubble() {
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Pergunte, sugira, reclame…"
+                placeholder={t("help.placeholder")}
                 rows={1}
                 maxLength={2000}
                 disabled={sending}
@@ -289,7 +267,7 @@ export function HelpBubble() {
               <button
                 onClick={handleSend}
                 disabled={!draft.trim() || sending}
-                aria-label="Enviar mensagem"
+                aria-label={t("help.sendLabel")}
                 className={cn(
                   "flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-all",
                   "bg-brand text-brand-fg hover:bg-brand-hover hover:scale-105 active:scale-95",
@@ -300,7 +278,7 @@ export function HelpBubble() {
               </button>
             </div>
             <p className="mt-1.5 px-1 text-[10px] text-text-muted">
-              Respostas geradas por IA. Nunca compartilhe senhas ou códigos.
+              {t("help.disclaimer")}
             </p>
           </div>
         </div>
@@ -336,14 +314,9 @@ function Message({
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
       )}
     >
-      {role === "assistant" && (
-        <div className="mr-2 mt-1 shrink-0">
-          <BrandMark className="h-5 w-5" />
-        </div>
-      )}
       <div
         className={cn(
-          "max-w-[80%] rounded-xl px-3.5 py-2 text-sm leading-relaxed text-pretty",
+          "max-w-[85%] rounded-xl px-3.5 py-2 text-sm leading-relaxed text-pretty",
           role === "user"
             ? "rounded-br-sm bg-brand text-brand-fg shadow-sm shadow-brand/20"
             : "rounded-bl-sm bg-surface-raised text-text-primary"
@@ -358,9 +331,6 @@ function Message({
 function TypingIndicator() {
   return (
     <div className="flex">
-      <div className="mr-2 mt-1 shrink-0">
-        <BrandMark className="h-5 w-5 animate-pulse" />
-      </div>
       <div className="flex items-center gap-1 rounded-xl rounded-bl-sm bg-surface-raised px-3.5 py-3">
         <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-text-muted [animation-delay:-0.3s]" />
         <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-text-muted [animation-delay:-0.15s]" />
