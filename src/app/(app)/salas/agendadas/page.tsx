@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Calendar, Users, Plus, ArrowRight } from "lucide-react";
+import { Calendar, Plus, ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/Button";
 
@@ -61,7 +61,7 @@ export default async function AgendadasPage() {
         <div className="mt-3 rounded-lg border border-border bg-surface">
           {!upcoming || upcoming.length === 0 ? (
             <div className="p-8 text-center text-sm text-text-muted">
-              Nada agendado. Crie uma sala com "Começa em" para aparecer aqui.
+              Nada agendado. Crie uma sala com &ldquo;Começa em&rdquo; para aparecer aqui.
             </div>
           ) : (
             <ul className="divide-y divide-border/60">
