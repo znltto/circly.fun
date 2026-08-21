@@ -22,6 +22,7 @@ export function RightDrawer({
       aria-hidden={!open}
       className={cn(
         "fixed right-0 top-0 z-30 flex h-full w-full flex-col border-l border-border bg-background transition-transform duration-200 ease-out-quart md:w-80",
+        "pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)]",
         !open && "translate-x-full"
       )}
     >
@@ -32,7 +33,7 @@ export function RightDrawer({
         <button
           onClick={onClose}
           aria-label="Fechar"
-          className="rounded-sm p-1 text-text-secondary hover:bg-surface-hover hover:text-text-primary"
+          className="-mr-1 flex h-9 w-9 items-center justify-center rounded-md text-text-secondary hover:bg-surface-hover hover:text-text-primary"
         >
           <X className="h-4 w-4" />
         </button>

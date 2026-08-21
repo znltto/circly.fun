@@ -10,7 +10,7 @@ import {
   useConnectionState,
   useRoomContext,
 } from "@livekit/components-react";
-import { ConnectionState, Track } from "livekit-client";
+import { ConnectionState, Track, VideoPresets } from "livekit-client";
 import { BrandMark } from "@/components/brand/BrandMark";
 import { Wordmark } from "@/components/brand/Wordmark";
 import { CcoMascot } from "@/components/brand/CcoMascot";
@@ -21,8 +21,14 @@ import { RightDrawer } from "./RightDrawer";
 import { ParticipantsList } from "./ParticipantsList";
 import { InRoomChat } from "./InRoomChat";
 import { MeetingProvider } from "./meeting-context";
+import { MeetingToasts } from "./MeetingToasts";
 import { RoomSoundEffects } from "./RoomSoundEffects";
 import { BrowserRecorder } from "./BrowserRecorder";
+import { RecordingIndicator } from "./RecordingIndicator";
+import { HostSync } from "./HostSync";
+import { LobbyQueue } from "./LobbyQueue";
+import { HandRaiseProvider, LowerAllHandsButton } from "./HandRaise";
+import { SpotlightProvider } from "./spotlight-context";
 import {
   createFilteredStream,
   type FilteredStreamHandle,
@@ -45,6 +51,11 @@ interface MeetingRoomProps {
   filter?: VideoFilter;
   /** Imagem de fundo (dataURL) quando filter === 'image'. */
   backgroundImage?: string;
+  /**
+   * Chave E2EE em base64url — se presente, ativa criptografia ponta-a-ponta.
+   * Vem do fragmento `#k=` do URL, nunca do server.
+   */
+  e2eeKey?: string | null;
 }
 
 /**
@@ -85,7 +96,28 @@ export function MeetingRoom({
   video,
   filter = "none",
   backgroundImage,
+  e2eeKey,
 }: MeetingRoomProps) {
+  // Prepara E2EE lazy — só instancia se a chave está presente. Precisa do
+  // worker do LiveKit e do KeyProvider externo.
+  const e2eeOptions = React.useMemo(() => {
+    if (!e2eeKey) return undefined;
+    if (typeof window === "undefined") return undefined;
+    try {
+      // Import dinâmico evita bundle desnecessário quando não usa E2EE.
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const lk = require("livekit-client") as typeof import("livekit-client");
+      const keyProvider = new lk.ExternalE2EEKeyProvider();
+      void keyProvider.setKey(e2eeKey);
+      const worker = new Worker(
+        new URL("livekit-client/e2ee-worker", import.meta.url)
+      );
+      return { keyProvider, worker };
+    } catch (err) {
+      console.warn("[MeetingRoom] E2EE indisponível:", err);
+      return undefined;
+    }
+  }, [e2eeKey]);
   const router = useRouter();
   const notifiedLeaveRef = React.useRef(false);
 
@@ -129,6 +161,7 @@ export function MeetingRoom({
       // Vídeo é publicado manualmente pelo <VideoPublisher /> para permitir
       // aplicar o filtro escolhido antes de enviar. Ver comentário no topo.
       video={false}
+      options={e2eeOptions ? { e2ee: e2eeOptions } : undefined}
       onDisconnected={handleDisconnected}
       onError={(err) => console.error("LiveKit error", err)}
       className="flex h-screen flex-col bg-background"
@@ -136,6 +169,8 @@ export function MeetingRoom({
       <MeetingProvider
         value={{ roomSlug, isHost, isAdmin, localIdentity: identity }}
       >
+       <SpotlightProvider>
+       <HandRaiseProvider>
         <RoomAudioRenderer />
         <ConnectionStateToast />
         <RoomSoundEffects />
@@ -152,6 +187,8 @@ export function MeetingRoom({
           displayName={displayName}
           onLeave={handleDisconnected}
         />
+       </HandRaiseProvider>
+       </SpotlightProvider>
       </MeetingProvider>
     </LiveKitRoom>
   );
@@ -240,10 +277,15 @@ function VideoPublisher({
           return;
         }
 
-        // 3) Publica via LiveKit
+        // 3) Publica via LiveKit com simulcast (3 camadas: low/med/high).
+        //    Isso permite que participantes com conexão fraca recebam a
+        //    versão de menor bitrate automaticamente, sem cortar o vídeo.
         publishedTrackRef.current = trackToPublish;
         await room.localParticipant.publishTrack(trackToPublish, {
           source: Track.Source.Camera,
+          simulcast: true,
+          videoEncoding: VideoPresets.h720.encoding,
+          videoSimulcastLayers: [VideoPresets.h180, VideoPresets.h360],
         });
       } catch (err) {
         console.error("[MeetingRoom] Falha ao publicar vídeo", err);
@@ -324,30 +366,43 @@ function MeetingChrome({
 
   return (
     <>
-      <header className="flex items-center justify-between border-b border-border px-4 py-2.5">
-        <Link href="/" className="flex items-center gap-2.5">
+      <MeetingToasts />
+      <HostSync />
+      <header className="flex items-center justify-between gap-3 border-b border-border px-3 py-2.5 sm:px-4">
+        <Link
+          href="/"
+          className="flex shrink-0 items-center gap-2 rounded-md"
+          aria-label="Circly"
+        >
           <BrandMark className="h-5 w-5 text-brand" />
-          <Wordmark className="text-xs" />
+          <Wordmark className="hidden text-xs sm:inline" />
         </Link>
-        <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1.5 text-xs text-text-muted">
+        <div className="flex min-w-0 flex-1 items-center justify-center gap-3">
+          <span
+            className="flex shrink-0 items-center gap-1.5 text-xs text-text-muted"
+            aria-label="Ao vivo"
+          >
             <span className="h-1.5 w-1.5 rounded-full bg-danger" />
-            Ao vivo
+            <span className="hidden sm:inline">Ao vivo</span>
           </span>
-          <span className="hidden text-sm text-text-primary md:block">
+          <span className="min-w-0 truncate text-sm text-text-primary">
             {roomTitle}
           </span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <LowerAllHandsButton />
+          <RecordingIndicator />
           <BrowserRecorder />
-          <span className="font-mono text-xs text-text-muted">
+          <span className="hidden font-mono text-xs text-text-muted md:inline">
             /s/{roomSlug}
           </span>
         </div>
       </header>
 
+      <LobbyQueue />
+
       <main className="relative flex flex-1 overflow-hidden">
-        <div className="flex-1 p-4 md:p-6">
+        <div className="flex-1 p-2 sm:p-4 md:p-6">
           <ParticipantGrid />
         </div>
 
@@ -413,6 +468,29 @@ function ReconnectingState({
   onLeave: () => void;
 }) {
   const isDisconnected = connectionState === ConnectionState.Disconnected;
+  // Se ficar mais de 15s tentando reconectar, oferece saída limpa.
+  const [showFallback, setShowFallback] = React.useState(false);
+  const startedAtRef = React.useRef<number>(Date.now());
+
+  React.useEffect(() => {
+    if (isDisconnected) {
+      setShowFallback(true);
+      return;
+    }
+    startedAtRef.current = Date.now();
+    setShowFallback(false);
+    const id = window.setInterval(() => {
+      if (Date.now() - startedAtRef.current > 15_000) {
+        setShowFallback(true);
+        window.clearInterval(id);
+      }
+    }, 1_000);
+    return () => window.clearInterval(id);
+  }, [isDisconnected]);
+
+  function reload() {
+    if (typeof window !== "undefined") window.location.reload();
+  }
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
@@ -421,18 +499,25 @@ function ReconnectingState({
         className="h-20 w-20 text-text-secondary"
       />
       <p className="font-serif text-lg text-text-primary">
-        {isDisconnected ? "Você saiu da sala." : "Reconectando..."}
+        {isDisconnected ? "Você saiu da sala." : "Reconectando…"}
       </p>
       <p className="max-w-sm text-sm text-text-muted text-pretty">
         {isDisconnected
-          ? "Se caiu sem querer, recarregue a página para tentar de novo."
-          : "Aguarde um instante — sua conexão está sendo restabelecida."}
+          ? "Se caiu sem querer, tenta entrar de novo."
+          : showFallback
+            ? "Sua conexão parece instável. Você pode tentar de novo ou sair."
+            : "Aguarde um instante — sua conexão está sendo restabelecida."}
       </p>
-      {isDisconnected && (
-        <Button variant="secondary" onClick={onLeave}>
-          Voltar ao início
-        </Button>
-      )}
+      <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+        {(showFallback || isDisconnected) && (
+          <>
+            <Button onClick={reload}>Tentar de novo</Button>
+            <Button variant="secondary" onClick={onLeave}>
+              Voltar ao início
+            </Button>
+          </>
+        )}
+      </div>
     </div>
   );
 }

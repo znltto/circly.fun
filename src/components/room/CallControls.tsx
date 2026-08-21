@@ -22,6 +22,9 @@ import {
   Keyboard,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { LockToggle } from "./LockToggle";
+import { HandRaiseButton } from "./HandRaise";
+import { SpotlightToggle } from "./spotlight-context";
 import { cn } from "@/lib/utils";
 
 /* ------------------------------------------------------------------
@@ -207,7 +210,9 @@ export function CallControls({
         : "Ativar microfone";
 
   return (
-    <div className="flex items-center justify-center gap-2 border-t border-border bg-background px-4 py-3">
+    <div
+      className="flex flex-wrap items-center justify-center gap-1.5 border-t border-border bg-background px-2 py-2.5 pb-[calc(env(safe-area-inset-bottom,0px)+0.625rem)] sm:gap-2 sm:px-4 sm:py-3"
+    >
       {/* Split button do microfone */}
       <div className="flex items-stretch">
         <ControlButton
@@ -283,16 +288,31 @@ export function CallControls({
         )}
       </div>
 
+      {/* Mão levantada — visível pra todos */}
+      <HandRaiseButton />
+
+      {/* Auto-focar quem fala */}
+      <SpotlightToggle />
+
+      {/* Lock só aparece pro host — o próprio componente se autoescala. */}
+      <LockToggle />
+
       <span className="mx-2 hidden h-6 w-px bg-border sm:inline-block" />
 
-      <Button
-        variant="danger"
-        size="md"
+      {/* Sair: sempre presente. Em mobile compacto usa botão circular
+          igual aos demais controles (evita transbordar linha). */}
+      <button
         onClick={() => setConfirmingLeave(true)}
-        leftIcon={<Phone className="h-4 w-4 rotate-[135deg]" />}
+        aria-label="Sair da sala"
+        title="Sair da sala"
+        className={cn(
+          "flex h-10 items-center justify-center gap-2 rounded-full bg-danger/15 text-danger transition-colors hover:bg-danger/25",
+          "w-10 sm:w-auto sm:px-4"
+        )}
       >
-        <span className="hidden sm:inline">Sair</span>
-      </Button>
+        <Phone className="h-4 w-4 rotate-[135deg]" />
+        <span className="hidden text-sm font-medium sm:inline">Sair</span>
+      </button>
 
       {confirmingLeave && (
         <LeaveConfirmDialog

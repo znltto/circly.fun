@@ -19,12 +19,40 @@ const createRoomSchema = z.object({
     .max(60, "Máximo 60 caracteres."),
   visibility: z.enum(["private", "link", "friends"]).default("link"),
   allow_guests: z.coerce.boolean().default(true),
+  lobby_enabled: z.coerce.boolean().default(false),
+  e2ee_enabled: z.coerce.boolean().default(false),
   max_participants: z.coerce.number().int().min(2).max(50).default(10),
   expires_in_hours: z.coerce.number().int().min(0).max(720).default(0),
+  scheduled_for: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => {
+      if (!v) return undefined;
+      // datetime-local envia "YYYY-MM-DDTHH:mm" sem timezone. new Date()
+      // interpreta como horário local do server, o que dá diferença em
+      // deploys em outra região. Assumimos que o navegador do host manda a
+      // string na hora local dele; convertemos pra ISO UTC no client em
+      // outra iteração se necessário.
+      const parsed = new Date(v);
+      if (Number.isNaN(parsed.getTime())) return undefined;
+      return parsed.toISOString();
+    }),
+  duration_minutes: z
+    .coerce.number()
+    .int()
+    .min(5)
+    .max(720)
+    .optional(),
 });
 
 export type CreateRoomState =
-  | { error?: string; slug?: string; inviteToken?: string }
+  | {
+      error?: string;
+      slug?: string;
+      inviteToken?: string;
+      e2eeEnabled?: boolean;
+    }
   | null;
 
 /**
@@ -39,8 +67,16 @@ export async function createRoom(
     title: formData.get("title"),
     visibility: formData.get("visibility") ?? "link",
     allow_guests: formData.get("allow_guests") === "on",
+    lobby_enabled: formData.get("lobby_enabled") === "on",
+    e2ee_enabled: formData.get("e2ee_enabled") === "on",
     max_participants: formData.get("max_participants") ?? 10,
     expires_in_hours: formData.get("expires_in_hours") ?? 0,
+    scheduled_for: formData.get("scheduled_for") ?? undefined,
+    duration_minutes:
+      formData.get("duration_minutes") === "" ||
+      formData.get("duration_minutes") === null
+        ? undefined
+        : formData.get("duration_minutes"),
   });
 
   if (!parsed.success) {
@@ -74,8 +110,12 @@ export async function createRoom(
         title: parsed.data.title,
         visibility: parsed.data.visibility,
         allow_guests: parsed.data.allow_guests,
+        lobby_enabled: parsed.data.lobby_enabled,
+        e2ee_enabled: parsed.data.e2ee_enabled,
         max_participants: parsed.data.max_participants,
         expires_at: expiresAt,
+        scheduled_for: parsed.data.scheduled_for ?? null,
+        duration_minutes: parsed.data.duration_minutes ?? null,
       })
       .select("id")
       .single();
@@ -117,7 +157,7 @@ export async function createRoom(
   }
 
   revalidatePath("/inicio");
-  return { slug, inviteToken };
+  return { slug, inviteToken, e2eeEnabled: parsed.data.e2ee_enabled };
 }
 
 const endRoomSchema = z.object({ slug: z.string() });

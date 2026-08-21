@@ -22,9 +22,13 @@ export async function GET(request: Request) {
   const providedToken =
     url.searchParams.get("token") ??
     request.headers.get("x-cron-token") ??
+    // Vercel Cron manda `Authorization: Bearer <CRON_SECRET>` automaticamente
+    (request.headers.get("authorization")?.startsWith("Bearer ")
+      ? request.headers.get("authorization")!.slice(7)
+      : "") ??
     "";
 
-  const expected = process.env.CRON_TOKEN;
+  const expected = process.env.CRON_TOKEN || process.env.CRON_SECRET;
   if (!expected) {
     return NextResponse.json(
       { error: "CRON_TOKEN não configurada." },

@@ -72,12 +72,14 @@ export default async function SalaPage({ params, searchParams }: PageProps) {
   const admin = createAdminClient();
   const { data: room } = await admin
     .from("rooms")
-    .select("id, recording_consent_required")
+    .select("id, recording_consent_required, scheduled_for, host_id")
     .eq("slug", slug)
     .single();
 
   let participantCount = 0;
   let requiresRecordingConsent = false;
+  let scheduledFor: string | null = null;
+  let isHostViewer = false;
   if (room) {
     const { count } = await admin
       .from("room_participants")
@@ -86,6 +88,8 @@ export default async function SalaPage({ params, searchParams }: PageProps) {
       .is("left_at", null);
     participantCount = count ?? 0;
     requiresRecordingConsent = room.recording_consent_required ?? false;
+    scheduledFor = room.scheduled_for;
+    isHostViewer = !!user && user.id === room.host_id;
   }
 
   return (
@@ -98,6 +102,8 @@ export default async function SalaPage({ params, searchParams }: PageProps) {
       participantCount={participantCount}
       requiresRecordingConsent={requiresRecordingConsent}
       isAdmin={isAdminEmail(user?.email)}
+      scheduledFor={scheduledFor}
+      isHostViewer={isHostViewer}
     />
   );
 }

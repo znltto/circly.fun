@@ -40,6 +40,11 @@ export function FriendRow({ friendshipId, friend }: FriendRowProps) {
           <PresenceIndicator status={status} showLabel />
         </div>
       </div>
+      {/*
+        Botão sempre visível em touch (opacity-0/hover só funciona no desktop
+        e deixava usuários de celular sem acesso à ação). Em telas com hover,
+        aparece só ao passar; em telas touch (coarse pointer), fica visível.
+      */}
       <Button
         variant="ghost"
         size="icon"
@@ -51,7 +56,7 @@ export function FriendRow({ friendshipId, friend }: FriendRowProps) {
             if (ok) await removeFriend(friendshipId);
           })
         }
-        className="opacity-0 group-hover:opacity-100 focus:opacity-100"
+        className="opacity-100 focus:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100"
       >
         <UserMinus className="h-4 w-4" />
       </Button>

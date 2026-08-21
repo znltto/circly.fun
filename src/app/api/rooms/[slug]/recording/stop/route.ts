@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isEgressEnabled, stopRoomRecording } from "@/lib/livekit/recording";
+import { logRoomAction } from "@/lib/rooms/audit";
 
 const bodySchema = z
   .object({
@@ -101,6 +102,19 @@ export async function POST(
     })
     .eq("egress_id", egressId)
     .in("status", ["starting", "active"]);
+
+  const { data: actor } = await admin
+    .from("profiles")
+    .select("display_name")
+    .eq("id", user.id)
+    .maybeSingle();
+  void logRoomAction({
+    roomId: room.id,
+    action: "recording-stop",
+    actorProfileId: user.id,
+    actorDisplayName: actor?.display_name ?? null,
+    detail: `egress ${egressId}`,
+  });
 
   return NextResponse.json({ ok: true, egressId });
 }

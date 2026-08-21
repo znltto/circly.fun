@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isEgressEnabled, startRoomRecording } from "@/lib/livekit/recording";
+import { logRoomAction } from "@/lib/rooms/audit";
 
 /**
  * POST /api/rooms/[slug]/recording/start
@@ -93,6 +94,19 @@ export async function POST(
         { status: 500 }
       );
     }
+
+    const { data: actor } = await admin
+      .from("profiles")
+      .select("display_name")
+      .eq("id", user.id)
+      .maybeSingle();
+    void logRoomAction({
+      roomId: room.id,
+      action: "recording-start",
+      actorProfileId: user.id,
+      actorDisplayName: actor?.display_name ?? null,
+      detail: `egress ${egressInfo.egressId}`,
+    });
 
     return NextResponse.json({
       recordingId: recording.id,

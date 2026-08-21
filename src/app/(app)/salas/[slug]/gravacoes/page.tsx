@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Download, Video } from "lucide-react";
+import { Download, Video, Sparkles, Loader2, AlertTriangle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { DownloadRecordingButton } from "./download-button";
-import type { RecordingStatus } from "@/types/database";
+import type {
+  RecordingStatus,
+  RecordingProcessingStatus,
+} from "@/types/database";
 
 export const metadata = { title: "Gravações" };
 
@@ -53,6 +56,37 @@ const STATUS_CLASS: Record<RecordingStatus, string> = {
   aborted: "text-text-muted",
 };
 
+function ProcessingBadge({ status }: { status: RecordingProcessingStatus }) {
+  if (status === "complete") {
+    return (
+      <span className="inline-flex items-center gap-1 text-brand">
+        <Sparkles className="h-3 w-3" />
+        analisada
+      </span>
+    );
+  }
+  if (status === "processing") {
+    return (
+      <span className="inline-flex items-center gap-1 text-brand">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        transcrevendo
+      </span>
+    );
+  }
+  if (status === "failed") {
+    return (
+      <span className="inline-flex items-center gap-1 text-danger">
+        <AlertTriangle className="h-3 w-3" />
+        análise falhou
+      </span>
+    );
+  }
+  if (status === "pending") {
+    return <span className="text-text-muted">aguardando IA</span>;
+  }
+  return null;
+}
+
 export default async function GravacoesPage({ params }: PageProps) {
   const { slug } = await params;
 
@@ -90,7 +124,7 @@ export default async function GravacoesPage({ params }: PageProps) {
   const { data: recordings } = await supabase
     .from("room_recordings")
     .select(
-      "id, status, storage_path, size_bytes, duration_seconds, started_at, ended_at, expires_at"
+      "id, status, storage_path, size_bytes, duration_seconds, started_at, ended_at, expires_at, processing_status, summary"
     )
     .eq("room_id", room.id)
     .order("started_at", { ascending: false });
@@ -107,8 +141,8 @@ export default async function GravacoesPage({ params }: PageProps) {
           Gravações desta sala
         </h1>
         <p className="mt-2 text-sm text-text-secondary text-pretty">
-          {room.title}. As gravações ficam guardadas por 30 dias e são
-          apagadas automaticamente depois disso.
+          {room.title}. O vídeo é removido após 7 dias — os resumos, tópicos e
+          decisões da IA ficam salvos permanentemente.
         </p>
       </header>
 
@@ -131,49 +165,73 @@ export default async function GravacoesPage({ params }: PageProps) {
         </div>
       ) : (
         <ul className="space-y-3">
-          {list.map((r) => (
-            <li
-              key={r.id}
-              className="rounded-md border border-border bg-surface p-4"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-md bg-brand/10 text-brand">
-                    <Video className="h-4 w-4" aria-hidden />
+          {list.map((r) => {
+            const proc = (r.processing_status ??
+              "pending") as RecordingProcessingStatus;
+            return (
+              <li
+                key={r.id}
+                className="rounded-md border border-border bg-surface p-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-md bg-brand/10 text-brand">
+                      <Video className="h-4 w-4" aria-hidden />
+                    </div>
+                    <div>
+                      <p className="text-sm text-text-primary">
+                        {formatDate(r.started_at)}
+                      </p>
+                      <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-text-muted">
+                        <span>Duração: {formatDuration(r.duration_seconds)}</span>
+                        <span>Tamanho: {formatBytes(r.size_bytes)}</span>
+                        <span
+                          className={
+                            STATUS_CLASS[r.status as RecordingStatus] ??
+                            "text-text-muted"
+                          }
+                        >
+                          {STATUS_LABEL[r.status as RecordingStatus] ?? r.status}
+                        </span>
+                        <ProcessingBadge status={proc} />
+                      </p>
+                      {r.summary && (
+                        <p className="mt-2 line-clamp-2 max-w-lg text-xs text-text-secondary">
+                          {r.summary}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-text-primary">
-                      {formatDate(r.started_at)}
-                    </p>
-                    <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-text-muted">
-                      <span>Duração: {formatDuration(r.duration_seconds)}</span>
-                      <span>Tamanho: {formatBytes(r.size_bytes)}</span>
-                      <span
-                        className={
-                          STATUS_CLASS[r.status as RecordingStatus] ??
-                          "text-text-muted"
-                        }
+
+                  <div className="flex flex-col items-end gap-1.5">
+                    {proc === "complete" && (
+                      <Link
+                        href={`/salas/${slug}/gravacoes/${r.id}`}
+                        className="inline-flex items-center gap-1.5 rounded-sm border border-brand/40 bg-brand/10 px-2.5 py-1 text-xs font-medium text-brand transition-colors hover:bg-brand/20"
                       >
-                        {STATUS_LABEL[r.status as RecordingStatus] ?? r.status}
+                        <Sparkles className="h-3.5 w-3.5" />
+                        Ver análise
+                      </Link>
+                    )}
+                    {r.status === "complete" && r.storage_path ? (
+                      <DownloadRecordingButton
+                        slug={slug}
+                        recordingId={r.id}
+                      />
+                    ) : (
+                      <span
+                        className="inline-flex items-center gap-1.5 rounded-sm border border-border px-2.5 py-1 text-xs text-text-muted"
+                        aria-hidden
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        indisponível
                       </span>
-                    </p>
+                    )}
                   </div>
                 </div>
-
-                {r.status === "complete" && r.storage_path ? (
-                  <DownloadRecordingButton slug={slug} recordingId={r.id} />
-                ) : (
-                  <span
-                    className="inline-flex items-center gap-1.5 rounded-sm border border-border px-2.5 py-1 text-xs text-text-muted"
-                    aria-hidden
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                    indisponível
-                  </span>
-                )}
-              </div>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>

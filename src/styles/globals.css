@@ -62,6 +62,7 @@
     background-color: hsl(var(--background));
     color: hsl(var(--text-primary));
     font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
   }
 
   ::selection {
@@ -152,6 +153,26 @@
 
   .text-pretty {
     text-wrap: pretty;
+  }
+
+  /* ---------------------------------------------------------------
+   * Safe-area helpers — para elementos fixados no bottom em mobile.
+   * O MobileNav ocupa ~4rem; usar `pb-mobile-nav` no main resolve
+   * o "último item some atrás do nav".
+   * --------------------------------------------------------------- */
+  .pb-mobile-nav {
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  @media (min-width: 768px) {
+    .pb-mobile-nav {
+      padding-bottom: 0;
+    }
   }
 }
 

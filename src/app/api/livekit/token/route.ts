@@ -6,11 +6,15 @@ import { createLivekitToken } from "@/lib/livekit/token";
 import { resolveInvite } from "@/lib/rooms/actions";
 import { makeLivekitIdentity } from "@/lib/rooms/slug";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { logRoomAction } from "@/lib/rooms/audit";
+import { sendPushToUser } from "@/lib/push/server";
 
 const bodySchema = z.object({
   slug: z.string().min(1),
   inviteToken: z.string().optional(),
   guestName: z.string().min(1).max(40).optional(),
+  /** Recebido depois que o host admite via /api/rooms/[slug]/lobby/admit. */
+  admitToken: z.string().uuid().optional(),
 });
 
 /**
@@ -55,7 +59,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Dados inválidos." }, { status: 400 });
   }
 
-  const { slug, inviteToken, guestName } = parsed.data;
+  const { slug, inviteToken, guestName, admitToken } = parsed.data;
 
   if (!process.env.NEXT_PUBLIC_LIVEKIT_URL) {
     return NextResponse.json(
@@ -76,7 +80,7 @@ export async function POST(request: Request) {
   const { data: room } = await admin
     .from("rooms")
     .select(
-      "id, host_id, title, visibility, allow_guests, max_participants, active, expires_at"
+      "id, host_id, title, visibility, allow_guests, max_participants, active, expires_at, locked, lobby_enabled"
     )
     .eq("slug", slug)
     .maybeSingle();
@@ -86,6 +90,94 @@ export async function POST(request: Request) {
   }
   if (room.expires_at && new Date(room.expires_at) < new Date()) {
     return NextResponse.json({ error: "Sala expirada." }, { status: 410 });
+  }
+
+  // Sala trancada: host continua entrando, novos participantes são barrados.
+  const isHostRequesting = !!user && user.id === room.host_id;
+  if (room.locked && !isHostRequesting) {
+    return NextResponse.json(
+      { error: "Sala trancada pelo host.", code: "room_locked" },
+      { status: 403 }
+    );
+  }
+
+  // Waiting room: se lobby_enabled=true e não é host, exige admitToken.
+  // Sem admitToken → cria entrada em room_lobby (ou reusa pendente) e devolve
+  // status=pending pro cliente aguardar aprovação.
+  if (room.lobby_enabled && !isHostRequesting) {
+    if (!admitToken) {
+      const displayName = user
+        ? (
+            await admin
+              .from("profiles")
+              .select("display_name")
+              .eq("id", user.id)
+              .single()
+          ).data?.display_name ?? "Convidado"
+        : (guestName?.trim().slice(0, 40) || "Convidado");
+
+      // Se o requisitante é logado e já tem um pedido pendente, reusa.
+      let lobbyId: string | null = null;
+      if (user) {
+        const { data: existing } = await admin
+          .from("room_lobby")
+          .select("id")
+          .eq("room_id", room.id)
+          .eq("profile_id", user.id)
+          .is("resolved_at", null)
+          .maybeSingle();
+        if (existing) lobbyId = existing.id;
+      }
+      if (!lobbyId) {
+        const { data: created, error: insertErr } = await admin
+          .from("room_lobby")
+          .insert({
+            room_id: room.id,
+            profile_id: user?.id ?? null,
+            guest_name: user ? null : displayName,
+            display_name: displayName,
+          })
+          .select("id")
+          .single();
+        if (insertErr || !created) {
+          return NextResponse.json(
+            { error: "Não consegui te colocar na fila. Tenta de novo." },
+            { status: 500 }
+          );
+        }
+        lobbyId = created.id;
+      }
+      return NextResponse.json({
+        status: "pending",
+        code: "lobby_pending",
+        lobbyId,
+        roomTitle: room.title,
+      });
+    }
+
+    // admitToken enviado: valida
+    const { data: lobbyRow } = await admin
+      .from("room_lobby")
+      .select("id, admit_token, resolution, room_id")
+      .eq("admit_token", admitToken)
+      .eq("room_id", room.id)
+      .maybeSingle();
+
+    if (
+      !lobbyRow ||
+      lobbyRow.resolution !== "admitted" ||
+      lobbyRow.admit_token !== admitToken
+    ) {
+      return NextResponse.json(
+        { error: "Convite de entrada inválido ou expirado." },
+        { status: 403 }
+      );
+    }
+    // Consome o token pra não ser reutilizado.
+    await admin
+      .from("room_lobby")
+      .update({ admit_token: null })
+      .eq("id", lobbyRow.id);
   }
 
   // Capacidade
@@ -171,15 +263,38 @@ export async function POST(request: Request) {
   }
 
   // Upsert participante ativo
+  let insertedParticipant = false;
   try {
-    await admin.from("room_participants").insert({
+    const { error: insertErr } = await admin.from("room_participants").insert({
       room_id: room.id,
       profile_id: profileIdForRecord,
       guest_name: guestNameForRecord,
       livekit_identity: identity,
     });
+    insertedParticipant = !insertErr;
   } catch {
     // Se por acaso duplicar (usuário reabrindo a página), ignoramos.
+  }
+
+  // Log só na primeira entrada — evita duplicar em reload rápido.
+  if (insertedParticipant) {
+    void logRoomAction({
+      roomId: room.id,
+      action: "join",
+      actorProfileId: profileIdForRecord,
+      actorDisplayName: displayName,
+      detail: role === "guest" ? "guest" : role === "host" ? "host" : "user",
+    });
+
+    // Notifica o host (mas não notifica o próprio host se ele estiver entrando).
+    if (role !== "host") {
+      void sendPushToUser(room.host_id, {
+        title: `${displayName} entrou`,
+        body: `Alguém entrou em "${room.title}".`,
+        url: `/s/${slug}/sala`,
+        tag: `room-join-${slug}`,
+      });
+    }
   }
 
   // Se veio via convite, incrementa uses_count (best-effort, não atômico).

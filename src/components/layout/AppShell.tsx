@@ -125,7 +125,7 @@ export function AppShell({ user, isAdmin = false, children }: AppShellProps) {
         </header>
 
         {/* Conteúdo */}
-        <main className="flex-1 pb-20 pt-14 md:pb-0 md:pt-0">{children}</main>
+        <main className="flex-1 pb-mobile-nav pt-14 md:pt-0">{children}</main>
 
         {/* Nav mobile */}
         <MobileNav />

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { countActiveParticipants } from "@/lib/livekit/room-service";
+import { logRoomAction } from "@/lib/rooms/audit";
 
 const bodySchema = z.object({
   identity: z.string().min(1),
@@ -48,12 +49,32 @@ export async function POST(
     return NextResponse.json({ ok: true, alreadyEnded: true });
   }
 
-  await admin
+  const { data: updatedParts } = await admin
     .from("room_participants")
     .update({ left_at: new Date().toISOString() })
     .eq("room_id", room.id)
     .eq("livekit_identity", parsed.data.identity)
-    .is("left_at", null);
+    .is("left_at", null)
+    .select("id, profile_id, guest_name");
+
+  const leaver = updatedParts?.[0];
+  if (leaver) {
+    let displayName: string | null = leaver.guest_name ?? null;
+    if (!displayName && leaver.profile_id) {
+      const { data: profile } = await admin
+        .from("profiles")
+        .select("display_name")
+        .eq("id", leaver.profile_id)
+        .maybeSingle();
+      displayName = profile?.display_name ?? null;
+    }
+    void logRoomAction({
+      roomId: room.id,
+      action: "leave",
+      actorProfileId: leaver.profile_id ?? null,
+      actorDisplayName: displayName,
+    });
+  }
 
   // Checa se a sala esvaziou. Se sim, encerra.
   const activeCount = await countActiveParticipants(slug);

@@ -50,11 +50,32 @@ export function DmThread({ friend, initialMessages }: DmThreadProps) {
             (m.sender_id === selfId && m.recipient_id === friend.id) ||
             (m.sender_id === friend.id && m.recipient_id === selfId);
           if (!belongs) return;
+          const fromSelf = m.sender_id === selfId;
           setMessages((prev) => {
+            // Se já veio o mesmo id do banco, não faz nada
             if (prev.some((existing) => existing.id === m.id)) return prev;
-            return [...prev, { ...m, from_self: m.sender_id === selfId }];
+
+            // Se é do próprio usuário, tenta reconciliar com a msg otimista
+            // (mesmo conteúdo, ainda com id temporário `temp-*`).
+            if (fromSelf) {
+              const tempIndex = prev.findIndex(
+                (existing) =>
+                  typeof existing.id === "string" &&
+                  existing.id.startsWith("temp-") &&
+                  existing.sender_id === selfId &&
+                  existing.recipient_id === m.recipient_id &&
+                  existing.content === m.content
+              );
+              if (tempIndex >= 0) {
+                const next = prev.slice();
+                next[tempIndex] = { ...m, from_self: true };
+                return next;
+              }
+            }
+
+            return [...prev, { ...m, from_self: fromSelf }];
           });
-          if (m.sender_id === friend.id) {
+          if (!fromSelf) {
             // recebida do amigo: marca como lida
             void markThreadRead(friend.id);
           }

@@ -6,6 +6,7 @@ import {
   kickParticipant,
   mutePublishedTrack,
 } from "@/lib/livekit/room-service";
+import { logRoomAction, type RoomAction } from "@/lib/rooms/audit";
 
 const bodySchema = z.object({
   slug: z.string().min(1),
@@ -45,7 +46,7 @@ export async function POST(request: Request) {
   const admin = createAdminClient();
   const { data: room } = await admin
     .from("rooms")
-    .select("host_id, active")
+    .select("id, host_id, active")
     .eq("slug", slug)
     .maybeSingle();
 
@@ -85,6 +86,36 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
+
+  // Resolve nomes pra deixar o log legível na UI do host.
+  const [{ data: actor }, { data: participant }] = await Promise.all([
+    admin.from("profiles").select("display_name").eq("id", user.id).maybeSingle(),
+    admin
+      .from("room_participants")
+      .select("guest_name, profile_id")
+      .eq("room_id", room.id)
+      .eq("livekit_identity", identity)
+      .maybeSingle(),
+  ]);
+
+  let targetName = participant?.guest_name ?? null;
+  if (!targetName && participant?.profile_id) {
+    const { data: targetProfile } = await admin
+      .from("profiles")
+      .select("display_name")
+      .eq("id", participant.profile_id)
+      .maybeSingle();
+    targetName = targetProfile?.display_name ?? null;
+  }
+
+  void logRoomAction({
+    roomId: room.id,
+    action: action as RoomAction,
+    actorProfileId: user.id,
+    actorDisplayName: actor?.display_name ?? null,
+    targetProfileId: participant?.profile_id ?? null,
+    targetDisplayName: targetName,
+  });
 
   return NextResponse.json({ ok: true });
 }

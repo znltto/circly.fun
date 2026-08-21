@@ -134,8 +134,8 @@ export default async function AdminPage() {
             precisa alguém puxar assunto.
           </div>
         ) : (
-          <div className="overflow-hidden rounded-lg border border-border bg-surface">
-            <table className="w-full">
+          <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+            <table className="w-full min-w-[720px]">
               <thead className="border-b border-border bg-surface-raised/50 text-left font-mono text-[10px] uppercase tracking-wider text-text-muted">
                 <tr>
                   <th className="px-4 py-3 font-medium">Quando</th>

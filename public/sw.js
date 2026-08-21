@@ -55,6 +55,50 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+/* -------- Web Push -------- */
+
+self.addEventListener("push", (event) => {
+  if (!event.data) return;
+  let payload = {};
+  try {
+    payload = event.data.json();
+  } catch {
+    payload = { title: "Circly", body: event.data.text() };
+  }
+  const title = payload.title || "Circly";
+  const options = {
+    body: payload.body || "",
+    icon: "/brand/icon-192.png",
+    badge: "/brand/icon-192.png",
+    tag: payload.tag || undefined,
+    data: { url: payload.url || "/inicio" },
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || "/inicio";
+  event.waitUntil(
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((clientList) => {
+        for (const client of clientList) {
+          if ("focus" in client) {
+            try {
+              return client.focus().then((focused) => {
+                if ("navigate" in focused) return focused.navigate(url);
+              });
+            } catch {
+              /* segue pro openWindow */
+            }
+          }
+        }
+        return self.clients.openWindow(url);
+      })
+  );
+});
+
 function isIgnoredCrossOrigin(url) {
   const host = url.hostname;
   if (host.endsWith(".supabase.co")) return true;

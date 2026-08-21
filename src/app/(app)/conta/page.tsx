@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { EditForm } from "./edit-form";
 import { DeleteDialog } from "./delete-dialog";
 import { LanguageSection } from "./language-section";
+import { NotificationsToggle } from "@/components/pwa/NotificationsToggle";
 import { getT, getLocale } from "@/lib/i18n/server";
 
 export const metadata = { title: "Conta" };
@@ -64,6 +65,25 @@ export default async function ContaPage() {
       />
 
       <LanguageSection />
+
+      <section
+        aria-labelledby="conta-notificacoes-heading"
+        className="rounded-lg border border-border bg-surface p-6"
+      >
+        <h2
+          id="conta-notificacoes-heading"
+          className="font-serif text-lg text-text-primary"
+        >
+          Notificações
+        </h2>
+        <p className="mt-2 text-sm text-text-secondary">
+          Receba um aviso quando alguém entrar em uma sala sua ou responder um
+          convite. Funciona mesmo com o app fechado.
+        </p>
+        <div className="mt-5">
+          <NotificationsToggle />
+        </div>
+      </section>
 
       <div className="rounded-lg border border-border bg-surface p-6">
         <h2 className="font-serif text-lg text-text-primary">

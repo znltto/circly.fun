@@ -54,12 +54,12 @@ export default async function Home() {
           <Wordmark className="text-base" />
         </Link>
 
-        <nav className="flex items-center gap-2 text-sm">
-          <InstallButton className="mr-1 hidden sm:inline-flex" />
-          <LanguageSwitcher align="right" className="mr-1" />
+        <nav className="flex items-center gap-1.5 text-sm sm:gap-2">
+          <InstallButton className="hidden md:inline-flex" />
+          <LanguageSwitcher align="right" className="hidden sm:inline-flex" />
           {loggedIn ? (
             <>
-              <Link href="/salas/nova">
+              <Link href="/salas/nova" className="hidden sm:block">
                 <Button size="sm" leftIcon={<Plus className="h-4 w-4" />}>
                   {t("landing.newRoom")}
                 </Button>
@@ -81,7 +81,7 @@ export default async function Home() {
             </>
           ) : (
             <>
-              <Link href="/entrar">
+              <Link href="/entrar" className="hidden sm:block">
                 <Button variant="ghost" size="sm">
                   {t("landing.signIn")}
                 </Button>

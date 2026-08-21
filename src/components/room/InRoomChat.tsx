@@ -612,8 +612,11 @@ export function InRoomChat({
       </div>
 
       {isGuest && (
-        <div className="border-t border-border bg-surface-raised/40 px-3 py-2 text-[11px] text-text-muted">
-          Mensagens de visitantes não são salvas nem enviadas com imagem.
+        <div className="border-t border-warning/40 bg-warning/10 px-3 py-2 text-[11px] text-text-primary">
+          <span className="font-medium">Você entrou como visitante.</span>{" "}
+          Suas mensagens só aparecem para quem está online agora — não ficam
+          salvas depois que você sai. Anexos não estão disponíveis para
+          visitantes.
         </div>
       )}
 

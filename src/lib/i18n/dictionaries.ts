@@ -37,6 +37,7 @@ export type Dictionary = {
     signOut: string;
     terms: string;
     privacy: string;
+    scheduled: string;
   };
   home: {
     greetingMorning: string;
@@ -168,6 +169,7 @@ const pt: Dictionary = {
     signOut: "Sair",
     terms: "Termos",
     privacy: "Privacidade",
+    scheduled: "Agendadas",
   },
   home: {
     greetingMorning: "Bom dia",
@@ -306,6 +308,7 @@ const es: Dictionary = {
     signOut: "Salir",
     terms: "Términos",
     privacy: "Privacidad",
+    scheduled: "Agendadas",
   },
   home: {
     greetingMorning: "Buenos días",
@@ -444,6 +447,7 @@ const en: Dictionary = {
     signOut: "Sign out",
     terms: "Terms",
     privacy: "Privacy",
+    scheduled: "Scheduled",
   },
   home: {
     greetingMorning: "Good morning",

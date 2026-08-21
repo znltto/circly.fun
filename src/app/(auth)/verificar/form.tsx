@@ -46,9 +46,38 @@ export function VerificarForm({ email }: { email: string }) {
 
   const canResend = !resending && cooldown === 0;
 
+  // Auto-submit assim que o código completa (evita ter de clicar em Entrar
+  // depois do paste). Guarda a última string enviada pra não re-submeter em
+  // loop se o server voltar com erro no mesmo código.
+  const formRef = React.useRef<HTMLFormElement>(null);
+  const lastAutoSubmittedRef = React.useRef<string>("");
+
+  const handleComplete = React.useCallback(
+    (full: string) => {
+      if (verifying) return;
+      if (full.length !== OTP_LENGTH) return;
+      if (lastAutoSubmittedRef.current === full) return;
+      lastAutoSubmittedRef.current = full;
+      formRef.current?.requestSubmit();
+    },
+    [verifying]
+  );
+
+  // Se veio erro do server, libera pra o próximo código diferente auto-enviar
+  React.useEffect(() => {
+    if (verifyState?.error) {
+      lastAutoSubmittedRef.current = "";
+    }
+  }, [verifyState]);
+
   return (
     <div className="space-y-6">
-      <form action={verifyAction} className="space-y-6" noValidate>
+      <form
+        ref={formRef}
+        action={verifyAction}
+        className="space-y-6"
+        noValidate
+      >
         <input type="hidden" name="email" value={email} />
         <input type="hidden" name="token" value={code} />
 
@@ -56,7 +85,9 @@ export function VerificarForm({ email }: { email: string }) {
           length={OTP_LENGTH}
           value={code}
           onChange={setCode}
+          onComplete={handleComplete}
           autoFocus
+          disabled={verifying}
           error={verifyState?.error}
         />
 

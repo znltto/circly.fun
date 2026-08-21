@@ -17,11 +17,17 @@ interface StatusResponse {
  * Badge REC pulsante. Aparece para TODOS os participantes quando há gravação
  * ativa na sala. Poll a cada 5s (mesmo endpoint que RecordingControl).
  *
+ * Emite toast in-call quando a gravação inicia ou termina — assim ninguém
+ * é gravado sem perceber, mesmo que a gravação comece depois do início da
+ * chamada.
+ *
  * Não renderiza se Egress desabilitado ou sem gravação.
  */
 export function RecordingIndicator() {
-  const { roomSlug } = useMeeting();
+  const { roomSlug, emitToast } = useMeeting();
   const [status, setStatus] = React.useState<StatusResponse | null>(null);
+  const wasActiveRef = React.useRef<boolean | null>(null);
+  const firstFetchRef = React.useRef(true);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -33,7 +39,33 @@ export function RecordingIndicator() {
         });
         if (!res.ok) return;
         const data = (await res.json()) as StatusResponse;
-        if (!cancelled) setStatus(data);
+        if (cancelled) return;
+        setStatus(data);
+
+        const isActive = !!data.active;
+        const previous = wasActiveRef.current;
+        // No primeiro fetch a gente estabelece o baseline. Se a sala já
+        // estava sendo gravada antes de entrarmos, o modal de consentimento
+        // pré-call já tratou disso; não voltamos a alertar aqui.
+        if (firstFetchRef.current) {
+          firstFetchRef.current = false;
+          wasActiveRef.current = isActive;
+          return;
+        }
+        if (previous === false && isActive) {
+          emitToast?.({
+            tone: "warning",
+            message:
+              "A sala começou a ser gravada agora. O host iniciou uma gravação.",
+            duration: 0, // persistente até dispensar
+          });
+        } else if (previous === true && !isActive) {
+          emitToast?.({
+            tone: "info",
+            message: "Gravação encerrada.",
+          });
+        }
+        wasActiveRef.current = isActive;
       } catch {
         // silencioso
       }
@@ -45,7 +77,7 @@ export function RecordingIndicator() {
       cancelled = true;
       window.clearInterval(id);
     };
-  }, [roomSlug]);
+  }, [roomSlug, emitToast]);
 
   if (!status?.active) return null;
 

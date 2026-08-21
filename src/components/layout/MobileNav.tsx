@@ -26,7 +26,7 @@ export function MobileNav() {
   return (
     <nav
       aria-label={t("nav.main")}
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur md:hidden"
     >
       <ul className="flex items-stretch justify-around">
         {items.map(({ href, labelKey, icon: Icon }) => {

@@ -94,7 +94,10 @@ export function OTPInput({
       <div
         role="group"
         aria-label={ariaLabel}
-        className="flex items-center gap-2"
+        // Grid ajusta o número de colunas ao length; slots encolhem em telas
+        // pequenas mantendo o toque ergonômico.
+        className="grid w-full gap-1.5 sm:gap-2"
+        style={{ gridTemplateColumns: `repeat(${length}, minmax(0, 1fr))` }}
       >
         {digits.map((d, i) => (
           <input
@@ -114,7 +117,7 @@ export function OTPInput({
             aria-label={`Dígito ${i + 1}`}
             aria-invalid={!!error || undefined}
             className={cn(
-              "h-14 w-11 rounded-md border bg-surface text-center font-mono text-xl",
+              "aspect-[3/4] min-w-0 rounded-md border bg-surface text-center font-mono text-lg sm:text-xl",
               "text-text-primary transition-colors",
               "focus:outline-none focus:border-focus",
               error ? "border-danger/50" : "border-border",

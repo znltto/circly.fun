@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { X, Send, HelpCircle } from "lucide-react";
+import { X, Send } from "lucide-react";
+import { BrandMark } from "@/components/brand/BrandMark";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n/context";
 
@@ -143,22 +144,43 @@ export function HelpBubble() {
         aria-label={t("help.openLabel")}
         aria-expanded={open}
         className={cn(
-          "fixed bottom-4 right-4 z-40 md:bottom-6 md:right-6",
-          "group flex h-12 w-12 items-center justify-center rounded-full",
-          "border border-border bg-surface shadow-lg shadow-black/40",
-          "transition-all duration-200 ease-out-quart",
-          "hover:border-border/80 hover:bg-surface-hover",
+          "fixed right-4 z-30 md:right-6",
+          // Sobe acima do MobileNav em mobile
+          "bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:bottom-6",
+          "group flex h-14 w-14 items-center justify-center rounded-full",
+          "border border-brand/40 bg-surface shadow-lg shadow-black/40",
+          "transition-all duration-300 ease-out-quart",
+          "hover:scale-110 hover:border-brand/70 hover:shadow-brand/20",
           "active:scale-95",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
           open
             ? "pointer-events-none scale-50 opacity-0"
             : "scale-100 opacity-100"
         )}
       >
-        <HelpCircle
-          className="h-5 w-5 text-text-secondary transition-colors group-hover:text-text-primary"
+        {/* halo pulsante externo */}
+        <span
           aria-hidden
+          className="absolute inset-0 animate-ping rounded-full bg-brand/10"
+          style={{ animationDuration: "3s" }}
         />
+        {/* halo hover */}
+        <span
+          aria-hidden
+          className="absolute inset-0 rounded-full bg-brand/15 opacity-0 transition-opacity group-hover:opacity-100"
+        />
+
+        {/* Logo Circly (BrandMark) */}
+        <BrandMark className="relative h-7 w-7 transition-transform group-hover:rotate-12" />
+
+        {/* Dot verde "online" */}
+        <span
+          aria-hidden
+          className="absolute -right-0.5 -top-0.5 flex h-3 w-3 items-center justify-center"
+        >
+          <span className="absolute h-3 w-3 animate-ping rounded-full bg-success/60" />
+          <span className="relative h-2 w-2 rounded-full bg-success ring-2 ring-surface" />
+        </span>
       </button>
 
       {/* ------------------------------------------------------------
@@ -200,10 +222,20 @@ export function HelpBubble() {
           )}
         >
           {/* -------- Header -------- */}
-          <header className="flex items-center justify-between border-b border-border bg-surface-raised/50 px-4 py-3">
+          <header className="relative flex items-center justify-between border-b border-border bg-surface-raised/50 px-4 py-3">
+            {/* Barra lime no topo */}
+            <span
+              aria-hidden
+              className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand/60 to-transparent"
+            />
+
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background">
-                <HelpCircle className="h-4 w-4 text-text-secondary" aria-hidden />
+              <div className="relative flex h-10 w-10 items-center justify-center rounded-full border border-brand/40 bg-background shadow-inner shadow-brand/10">
+                <BrandMark className="h-6 w-6" />
+                <span
+                  aria-hidden
+                  className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-success ring-2 ring-surface-raised"
+                />
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-medium text-text-primary">
@@ -314,9 +346,14 @@ function Message({
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
       )}
     >
+      {role === "assistant" && (
+        <div className="mr-2 mt-1 shrink-0">
+          <BrandMark className="h-5 w-5" />
+        </div>
+      )}
       <div
         className={cn(
-          "max-w-[85%] rounded-xl px-3.5 py-2 text-sm leading-relaxed text-pretty",
+          "max-w-[80%] rounded-xl px-3.5 py-2 text-sm leading-relaxed text-pretty",
           role === "user"
             ? "rounded-br-sm bg-brand text-brand-fg shadow-sm shadow-brand/20"
             : "rounded-bl-sm bg-surface-raised text-text-primary"
@@ -331,6 +368,9 @@ function Message({
 function TypingIndicator() {
   return (
     <div className="flex">
+      <div className="mr-2 mt-1 shrink-0">
+        <BrandMark className="h-5 w-5 animate-pulse" />
+      </div>
       <div className="flex items-center gap-1 rounded-xl rounded-bl-sm bg-surface-raised px-3.5 py-3">
         <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-text-muted [animation-delay:-0.3s]" />
         <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-text-muted [animation-delay:-0.15s]" />

@@ -9,6 +9,7 @@ import {
   User,
   MessageSquare,
   Shield,
+  Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n/context";
@@ -26,6 +27,7 @@ const items: NavItem[] = [
   { href: "/pessoas", labelKey: "nav.people", icon: Users },
   { href: "/mensagens", labelKey: "nav.messages", icon: MessageSquare },
   { href: "/salas/nova", labelKey: "nav.newRoom", icon: DoorOpen },
+  { href: "/salas/agendadas", labelKey: "nav.scheduled", icon: Calendar },
   { href: "/conta", labelKey: "nav.account", icon: User },
   { href: "/admin", labelKey: "nav.admin", icon: Shield, admin: true },
 ];

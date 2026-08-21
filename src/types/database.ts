@@ -27,6 +27,12 @@ export type RecordingStatus =
   | "complete"
   | "failed"
   | "aborted";
+export type RecordingProcessingStatus =
+  | "pending"
+  | "processing"
+  | "complete"
+  | "failed"
+  | "skipped";
 
 export interface Database {
   public: {
@@ -125,6 +131,11 @@ export interface Database {
           expires_at: string | null;
           ended_at: string | null;
           recording_consent_required: boolean;
+          locked: boolean;
+          lobby_enabled: boolean;
+          scheduled_for: string | null;
+          duration_minutes: number | null;
+          e2ee_enabled: boolean;
         };
         Insert: {
           id?: string;
@@ -140,6 +151,11 @@ export interface Database {
           expires_at?: string | null;
           ended_at?: string | null;
           recording_consent_required?: boolean;
+          locked?: boolean;
+          lobby_enabled?: boolean;
+          scheduled_for?: string | null;
+          duration_minutes?: number | null;
+          e2ee_enabled?: boolean;
         };
         Update: {
           id?: string;
@@ -155,12 +171,153 @@ export interface Database {
           expires_at?: string | null;
           ended_at?: string | null;
           recording_consent_required?: boolean;
+          locked?: boolean;
+          lobby_enabled?: boolean;
+          scheduled_for?: string | null;
+          duration_minutes?: number | null;
+          e2ee_enabled?: boolean;
         };
         Relationships: [
           {
             foreignKeyName: "rooms_host_id_fkey";
             columns: ["host_id"];
             referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      push_subscriptions: {
+        Row: {
+          id: string;
+          profile_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          user_agent: string | null;
+          created_at: string;
+          last_used_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          profile_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          user_agent?: string | null;
+          created_at?: string;
+          last_used_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          profile_id?: string;
+          endpoint?: string;
+          p256dh?: string;
+          auth?: string;
+          user_agent?: string | null;
+          created_at?: string;
+          last_used_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_profile_id_fkey";
+            columns: ["profile_id"];
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      room_actions_log: {
+        Row: {
+          id: string;
+          room_id: string;
+          actor_profile_id: string | null;
+          actor_display_name: string | null;
+          target_profile_id: string | null;
+          target_display_name: string | null;
+          action: string;
+          detail: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          room_id: string;
+          actor_profile_id?: string | null;
+          actor_display_name?: string | null;
+          target_profile_id?: string | null;
+          target_display_name?: string | null;
+          action: string;
+          detail?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          room_id?: string;
+          actor_profile_id?: string | null;
+          actor_display_name?: string | null;
+          target_profile_id?: string | null;
+          target_display_name?: string | null;
+          action?: string;
+          detail?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "room_actions_log_room_id_fkey";
+            columns: ["room_id"];
+            referencedRelation: "rooms";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      room_lobby: {
+        Row: {
+          id: string;
+          room_id: string;
+          profile_id: string | null;
+          guest_name: string | null;
+          display_name: string;
+          requested_at: string;
+          resolved_at: string | null;
+          resolution: "admitted" | "denied" | "cancelled" | "timeout" | null;
+          admit_token: string | null;
+        };
+        Insert: {
+          id?: string;
+          room_id: string;
+          profile_id?: string | null;
+          guest_name?: string | null;
+          display_name: string;
+          requested_at?: string;
+          resolved_at?: string | null;
+          resolution?:
+            | "admitted"
+            | "denied"
+            | "cancelled"
+            | "timeout"
+            | null;
+          admit_token?: string | null;
+        };
+        Update: {
+          id?: string;
+          room_id?: string;
+          profile_id?: string | null;
+          guest_name?: string | null;
+          display_name?: string;
+          requested_at?: string;
+          resolved_at?: string | null;
+          resolution?:
+            | "admitted"
+            | "denied"
+            | "cancelled"
+            | "timeout"
+            | null;
+          admit_token?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "room_lobby_room_id_fkey";
+            columns: ["room_id"];
+            referencedRelation: "rooms";
             referencedColumns: ["id"];
           }
         ];
@@ -172,6 +329,7 @@ export interface Database {
           egress_id: string;
           status: RecordingStatus;
           storage_path: string | null;
+          audio_path: string | null;
           size_bytes: number | null;
           duration_seconds: number | null;
           started_by: string;
@@ -179,6 +337,17 @@ export interface Database {
           ended_at: string | null;
           expires_at: string;
           created_at: string;
+          processing_status: RecordingProcessingStatus;
+          processed_at: string | null;
+          processing_error: string | null;
+          transcript: string | null;
+          summary: string | null;
+          topics_json: Json | null;
+          action_items_json: Json | null;
+          decisions_json: Json | null;
+          participants_json: Json | null;
+          language: string | null;
+          keep_video: boolean;
         };
         Insert: {
           id?: string;
@@ -186,6 +355,7 @@ export interface Database {
           egress_id: string;
           status?: RecordingStatus;
           storage_path?: string | null;
+          audio_path?: string | null;
           size_bytes?: number | null;
           duration_seconds?: number | null;
           started_by: string;
@@ -193,6 +363,17 @@ export interface Database {
           ended_at?: string | null;
           expires_at?: string;
           created_at?: string;
+          processing_status?: RecordingProcessingStatus;
+          processed_at?: string | null;
+          processing_error?: string | null;
+          transcript?: string | null;
+          summary?: string | null;
+          topics_json?: Json | null;
+          action_items_json?: Json | null;
+          decisions_json?: Json | null;
+          participants_json?: Json | null;
+          language?: string | null;
+          keep_video?: boolean;
         };
         Update: {
           id?: string;
@@ -200,6 +381,7 @@ export interface Database {
           egress_id?: string;
           status?: RecordingStatus;
           storage_path?: string | null;
+          audio_path?: string | null;
           size_bytes?: number | null;
           duration_seconds?: number | null;
           started_by?: string;
@@ -207,6 +389,17 @@ export interface Database {
           ended_at?: string | null;
           expires_at?: string;
           created_at?: string;
+          processing_status?: RecordingProcessingStatus;
+          processed_at?: string | null;
+          processing_error?: string | null;
+          transcript?: string | null;
+          summary?: string | null;
+          topics_json?: Json | null;
+          action_items_json?: Json | null;
+          decisions_json?: Json | null;
+          participants_json?: Json | null;
+          language?: string | null;
+          keep_video?: boolean;
         };
         Relationships: [
           {
