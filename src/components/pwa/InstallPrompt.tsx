@@ -52,7 +52,7 @@ export function InstallPrompt() {
       aria-label={t("install.ariaLabel")}
       className="fixed z-20 flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 text-sm shadow-lg
         left-4 md:left-auto right-4 md:right-6
-        bottom-[calc(9rem+env(safe-area-inset-bottom,0px))] md:bottom-6"
+        bottom-[calc(9rem+env(safe-area-inset-bottom,0px))] md:bottom-24"
     >
       <button
         type="button"
