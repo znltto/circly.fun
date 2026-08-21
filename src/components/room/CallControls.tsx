@@ -6,7 +6,7 @@ import {
   useTrackToggle,
   useRoomContext,
 } from "@livekit/components-react";
-import { Track } from "livekit-client";
+import { AudioPresets, Track, VideoPresets } from "livekit-client";
 import {
   Mic,
   MicOff,
@@ -169,14 +169,48 @@ export function CallControls({
     };
   }, [micMode, pttKey, localParticipant]);
 
-  /* --- Screen share com áudio do sistema --------------------------- */
+  /* --- Screen share com áudio do sistema ---------------------------
+   *
+   * Sem opções específicas, o LiveKit trata o áudio de tela como voz de
+   * mic: aplica echo cancel / noise suppression / AGC e codifica em Opus
+   * mono ~20 kbps com DTX/RED ligados. Isso destrói música, jogos e vídeo
+   * — o outro lado escuta abafado, cortado nos silêncios e em mono.
+   *
+   * Correção:
+   *   - Capture: desliga o processamento de voz do browser.
+   *   - Publish: usa preset `musicHighQuality` (Opus 192 kbps stereo),
+   *     força stereo, desativa DTX (não corta silêncios) e RED (redundância
+   *     só faz sentido pra voz).
+   *   - Vídeo: publica a 30 fps com bitrate maior — a maioria do screen
+   *     share tem movimento (vídeo, scroll, gameplay).
+   */
   async function toggleScreenShare() {
     if (screenOn) {
       await localParticipant.setScreenShareEnabled(false);
       return;
     }
     try {
-      await localParticipant.setScreenShareEnabled(true, { audio: true });
+      await localParticipant.setScreenShareEnabled(
+        true,
+        {
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false,
+          },
+          resolution: VideoPresets.h1080.resolution,
+        },
+        {
+          audioPreset: AudioPresets.musicHighQuality,
+          dtx: false,
+          red: false,
+          forceStereo: true,
+          videoEncoding: {
+            maxBitrate: 5_000_000,
+            maxFramerate: 30,
+          },
+        }
+      );
     } catch (err) {
       console.warn("[screen] falha ao compartilhar:", err);
     }

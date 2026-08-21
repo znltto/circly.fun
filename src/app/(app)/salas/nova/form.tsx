@@ -4,10 +4,56 @@ import * as React from "react";
 import { useActionState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Copy, Check, ArrowRight, ShieldCheck } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarClock,
+  Check,
+  Copy,
+  KeyRound,
+  Link2,
+  Lock,
+  ShieldCheck,
+  Sparkles,
+  Users,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
+import { Switch } from "@/components/ui/Switch";
+import { DateTimePicker } from "@/components/ui/DateTimePicker";
 import { createRoom, type CreateRoomState } from "@/lib/rooms/actions";
+
+type Visibility = "link" | "friends" | "private";
+
+const EXPIRES_OPTIONS = [
+  { value: "0", label: "Não expira automaticamente" },
+  { value: "1", label: "1 hora" },
+  { value: "6", label: "6 horas" },
+  { value: "24", label: "1 dia" },
+  { value: "72", label: "3 dias" },
+  { value: "168", label: "7 dias" },
+  { value: "720", label: "30 dias" },
+];
+
+const DURATION_OPTIONS = [
+  { value: "", label: "Sem duração definida" },
+  { value: "15", label: "15 minutos" },
+  { value: "30", label: "30 minutos" },
+  { value: "45", label: "45 minutos" },
+  { value: "60", label: "1 hora" },
+  { value: "90", label: "1 h 30 min" },
+  { value: "120", label: "2 horas" },
+];
+
+const MAX_PARTICIPANTS_OPTIONS = [
+  { value: "2", label: "2 pessoas — 1 a 1" },
+  { value: "4", label: "Até 4 pessoas" },
+  { value: "8", label: "Até 8 pessoas" },
+  { value: "12", label: "Até 12 pessoas" },
+  { value: "20", label: "Até 20 pessoas" },
+  { value: "30", label: "Até 30 pessoas" },
+  { value: "50", label: "Até 50 pessoas" },
+];
 
 export function NovaSalaForm({ appUrl }: { appUrl: string }) {
   const [state, formAction, pending] = useActionState<
@@ -15,221 +61,284 @@ export function NovaSalaForm({ appUrl }: { appUrl: string }) {
     FormData
   >(createRoom, null);
 
+  const [visibility, setVisibility] = React.useState<Visibility>("link");
+  const [allowGuests, setAllowGuests] = React.useState(true);
+  const [lobbyEnabled, setLobbyEnabled] = React.useState(false);
+  const [e2eeEnabled, setE2eeEnabled] = React.useState(false);
+  const [maxParticipants, setMaxParticipants] = React.useState("10");
+  const [expiresInHours, setExpiresInHours] = React.useState("0");
+  const [scheduleEnabled, setScheduleEnabled] = React.useState(false);
+  const [scheduledIso, setScheduledIso] = React.useState("");
+  const [durationMinutes, setDurationMinutes] = React.useState("");
+
   if (state?.slug) {
     return <SuccessCard appUrl={appUrl} state={state} />;
   }
 
   return (
-    <form action={formAction} className="space-y-6" noValidate>
-      <Input
-        name="title"
-        label="Nome da sala"
-        placeholder="Ex: papo de sexta"
-        required
-        maxLength={60}
-        error={state?.error}
-      />
-
-      <fieldset className="space-y-3">
-        <legend className="text-sm font-medium text-text-primary">
-          Quem pode entrar
-        </legend>
-        <VisibilityOption
-          value="link"
-          label="Quem tiver o link"
-          description="Você compartilha um link privado. Visitantes podem entrar com um nome."
-          defaultChecked
-        />
-        <VisibilityOption
-          value="friends"
-          label="Amigos aceitos"
-          description="Apenas quem já é seu amigo pode entrar. Sem link público."
-        />
-        <VisibilityOption
-          value="private"
-          label="Só eu, por enquanto"
-          description="Você cria a sala e depois convida — ninguém entra até liberar."
-        />
-      </fieldset>
-
-      <div className="flex items-start gap-3 rounded-md border border-border bg-surface p-4">
-        <input
-          id="allow_guests"
-          name="allow_guests"
-          type="checkbox"
-          defaultChecked
-          className="mt-1 h-4 w-4 rounded border-border bg-background accent-brand"
-        />
-        <label htmlFor="allow_guests" className="text-sm">
-          <span className="text-text-primary">Permitir visitantes</span>
-          <span className="mt-0.5 block text-text-muted">
-            Deixa pessoas sem conta entrarem só com um nome.
-          </span>
-        </label>
-      </div>
-
-      <div className="flex items-start gap-3 rounded-md border border-border bg-surface p-4">
-        <input
-          id="lobby_enabled"
-          name="lobby_enabled"
-          type="checkbox"
-          className="mt-1 h-4 w-4 rounded border-border bg-background accent-brand"
-        />
-        <label htmlFor="lobby_enabled" className="text-sm">
-          <span className="text-text-primary">Sala de espera</span>
-          <span className="mt-0.5 block text-text-muted">
-            Novas pessoas ficam aguardando você aprovar antes de entrar.
-            Recomendado pra reunião com pessoas de fora.
-          </span>
-        </label>
-      </div>
-
-      <div className="flex items-start gap-3 rounded-md border border-border bg-surface p-4">
-        <input
-          id="e2ee_enabled"
-          name="e2ee_enabled"
-          type="checkbox"
-          className="mt-1 h-4 w-4 rounded border-border bg-background accent-brand"
-        />
-        <label htmlFor="e2ee_enabled" className="text-sm">
-          <span className="flex items-center gap-1.5 text-text-primary">
-            <ShieldCheck className="h-3.5 w-3.5 text-brand" />
-            Criptografia ponta-a-ponta
-          </span>
-          <span className="mt-0.5 block text-text-muted">
-            O servidor nunca vê áudio/vídeo. A chave vai no fim do link
-            (parte depois do <code className="font-mono">#</code>) — quem
-            recebe o link já entra. <strong>Desativa a gravação</strong>.
-          </span>
-        </label>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <Input
-          name="max_participants"
-          label="Máximo de participantes"
-          type="number"
-          min={2}
-          max={50}
-          defaultValue={10}
-        />
-        <Input
-          name="expires_in_hours"
-          label="Expira em (horas)"
-          type="number"
-          min={0}
-          max={720}
-          defaultValue={0}
-          hint="0 = não expira até você encerrar."
-        />
-      </div>
-
-      <ScheduleFields />
-
-      <Button
-        type="submit"
-        size="lg"
-        className="w-full"
-        loading={pending}
-        rightIcon={!pending ? <ArrowRight className="h-4 w-4" /> : undefined}
+    <form action={formAction} className="space-y-8" noValidate>
+      <SectionCard
+        icon={<Sparkles className="h-4 w-4" aria-hidden />}
+        title="Identidade"
+        description="Um nome curto pra reconhecer a sala mais tarde."
       >
-        Criar sala
-      </Button>
+        <Input
+          name="title"
+          label="Nome da sala"
+          placeholder="Ex: papo de sexta"
+          required
+          maxLength={60}
+          error={state?.error}
+        />
+      </SectionCard>
+
+      <SectionCard
+        icon={<Users className="h-4 w-4" aria-hidden />}
+        title="Quem pode entrar"
+        description="Escolha o tipo de acesso. Isso não muda depois."
+      >
+        <div className="space-y-2.5">
+          <VisibilityOption
+            value="link"
+            current={visibility}
+            onSelect={setVisibility}
+            icon={<Link2 className="h-3.5 w-3.5" aria-hidden />}
+            label="Quem tiver o link"
+            description="Um link privado. Visitantes podem entrar informando um nome."
+          />
+          <VisibilityOption
+            value="friends"
+            current={visibility}
+            onSelect={setVisibility}
+            icon={<Users className="h-3.5 w-3.5" aria-hidden />}
+            label="Amigos aceitos"
+            description="Apenas quem já é seu amigo pode entrar. Sem link público."
+          />
+          <VisibilityOption
+            value="private"
+            current={visibility}
+            onSelect={setVisibility}
+            icon={<Lock className="h-3.5 w-3.5" aria-hidden />}
+            label="Só eu, por enquanto"
+            description="Você cria a sala e convida depois — ninguém entra até liberar."
+          />
+        </div>
+        <input type="hidden" name="visibility" value={visibility} />
+      </SectionCard>
+
+      <SectionCard
+        icon={<ShieldCheck className="h-4 w-4" aria-hidden />}
+        title="Segurança e acesso"
+        description="Controles opcionais pra apertar o cerco na entrada."
+      >
+        <div className="space-y-2.5">
+          <Switch
+            name="allow_guests"
+            checked={allowGuests}
+            onChange={setAllowGuests}
+            label="Permitir visitantes"
+            description="Deixa pessoas sem conta entrarem só com um nome."
+          />
+          <Switch
+            name="lobby_enabled"
+            checked={lobbyEnabled}
+            onChange={setLobbyEnabled}
+            label="Sala de espera"
+            description="Novas pessoas aguardam sua aprovação antes de entrar. Recomendado pra reunião com pessoas de fora."
+          />
+          <Switch
+            name="e2ee_enabled"
+            checked={e2eeEnabled}
+            onChange={setE2eeEnabled}
+            icon={<KeyRound className="h-3.5 w-3.5 text-brand" aria-hidden />}
+            label="Criptografia ponta-a-ponta"
+            description={
+              <>
+                O servidor nunca vê áudio/vídeo. A chave vai no fim do link
+                (parte depois do <code className="font-mono">#</code>) — quem
+                recebe o link já entra. <strong>Desativa a gravação.</strong>
+              </>
+            }
+          />
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        icon={<Users className="h-4 w-4" aria-hidden />}
+        title="Limites"
+        description="Quantas pessoas cabem e por quanto tempo a sala fica de pé."
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <Select
+            label="Máximo de participantes"
+            value={maxParticipants}
+            onChange={setMaxParticipants}
+            options={MAX_PARTICIPANTS_OPTIONS}
+          />
+          <Select
+            label="Sala expira em"
+            value={expiresInHours}
+            onChange={setExpiresInHours}
+            options={EXPIRES_OPTIONS}
+          />
+        </div>
+        <input
+          type="hidden"
+          name="max_participants"
+          value={maxParticipants}
+        />
+        <input
+          type="hidden"
+          name="expires_in_hours"
+          value={expiresInHours}
+        />
+      </SectionCard>
+
+      <SectionCard
+        icon={<CalendarClock className="h-4 w-4" aria-hidden />}
+        title="Agendamento"
+        description="Aparece nas próximas reuniões. Quem chegar antes vê contagem regressiva."
+      >
+        <Switch
+          checked={scheduleEnabled}
+          onChange={(next) => {
+            setScheduleEnabled(next);
+            if (!next) {
+              setScheduledIso("");
+              setDurationMinutes("");
+            }
+          }}
+          label="Agendar essa sala"
+          description={
+            scheduleEnabled
+              ? "Escolha data, horário e duração abaixo."
+              : "Deixe desligado se for reunião agora."
+          }
+        />
+
+        {scheduleEnabled && (
+          <div className="grid gap-4 pt-1 md:grid-cols-2">
+            <DateTimePicker
+              name="scheduled_for"
+              label="Começa em"
+              value={scheduledIso}
+              onChange={setScheduledIso}
+              minDate={new Date()}
+              hint="Fuso do seu navegador."
+            />
+            <Select
+              label="Duração estimada"
+              value={durationMinutes}
+              onChange={setDurationMinutes}
+              options={DURATION_OPTIONS}
+              placeholder="Sem duração definida"
+            />
+            {durationMinutes !== "" && (
+              <input
+                type="hidden"
+                name="duration_minutes"
+                value={durationMinutes}
+              />
+            )}
+          </div>
+        )}
+      </SectionCard>
+
+      <div className="sticky bottom-4 z-10 -mx-2 rounded-lg border border-border/60 bg-surface/95 p-3 shadow-lg shadow-black/30 backdrop-blur">
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full"
+          loading={pending}
+          rightIcon={!pending ? <ArrowRight className="h-4 w-4" /> : undefined}
+        >
+          Criar sala
+        </Button>
+      </div>
     </form>
   );
 }
 
-function ScheduleFields() {
-  const [localValue, setLocalValue] = React.useState("");
-
-  // Converte "YYYY-MM-DDTHH:mm" (hora local do browser) → ISO absoluto pro
-  // hidden field que a server action lê. Se vazio, hidden fica vazio.
-  const isoValue = React.useMemo(() => {
-    if (!localValue) return "";
-    const d = new Date(localValue);
-    if (Number.isNaN(d.getTime())) return "";
-    return d.toISOString();
-  }, [localValue]);
-
+function SectionCard({
+  icon,
+  title,
+  description,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
   return (
-    <fieldset className="rounded-md border border-border bg-surface p-4">
-      <legend className="px-1 text-sm font-medium text-text-primary">
-        Agendar (opcional)
-      </legend>
-      <p className="mb-3 text-xs text-text-muted">
-        Se preencher, aparece nas suas próximas reuniões. Convidados que
-        chegarem antes veem uma contagem regressiva.
-      </p>
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-1">
-          <label
-            htmlFor="scheduled_for_local"
-            className="block text-xs font-medium text-text-secondary"
-          >
-            Começa em
-          </label>
-          <input
-            id="scheduled_for_local"
-            type="datetime-local"
-            value={localValue}
-            onChange={(e) => setLocalValue(e.target.value)}
-            className="w-full rounded-md border border-border bg-surface px-3.5 py-2.5 text-sm text-text-primary focus:border-focus focus:outline-none"
-          />
-          <p className="text-[11px] text-text-muted">
-            {isoValue
-              ? `Fuso do seu navegador (será registrado como ${new Date(
-                  isoValue
-                ).toLocaleString("pt-BR", {
-                  day: "2-digit",
-                  month: "short",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  timeZoneName: "short",
-                })}).`
-              : "Fuso do seu navegador."}
-          </p>
-          <input type="hidden" name="scheduled_for" value={isoValue} />
+    <section className="rounded-lg border border-border bg-surface/60 p-5">
+      <header className="mb-4 flex items-start gap-3">
+        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand">
+          {icon}
+        </span>
+        <div>
+          <h2 className="text-sm font-semibold text-text-primary">{title}</h2>
+          <p className="mt-0.5 text-xs text-text-muted">{description}</p>
         </div>
-        <Input
-          name="duration_minutes"
-          label="Duração (min)"
-          type="number"
-          min={5}
-          max={720}
-          placeholder="30"
-          hint="Só para contexto — não encerra sozinho."
-        />
-      </div>
-    </fieldset>
+      </header>
+      <div className="space-y-3">{children}</div>
+    </section>
   );
 }
 
 function VisibilityOption({
   value,
+  current,
+  onSelect,
   label,
   description,
-  defaultChecked,
+  icon,
 }: {
-  value: "link" | "friends" | "private";
+  value: Visibility;
+  current: Visibility;
+  onSelect: (next: Visibility) => void;
   label: string;
   description: string;
-  defaultChecked?: boolean;
+  icon: React.ReactNode;
 }) {
+  const selected = current === value;
   return (
-    <label className="flex cursor-pointer items-start gap-3 rounded-md border border-border bg-surface p-4 transition-colors has-[:checked]:border-brand/50 has-[:checked]:bg-brand/5">
-      <input
-        type="radio"
-        name="visibility"
-        value={value}
-        defaultChecked={defaultChecked}
-        className="mt-1 h-4 w-4 border-border bg-background accent-brand"
-      />
-      <span className="text-sm">
-        <span className="text-text-primary">{label}</span>
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      onClick={() => onSelect(value)}
+      className={cnBase(
+        "flex w-full items-start gap-3 rounded-md border p-4 text-left transition-colors",
+        selected
+          ? "border-brand/50 bg-brand/5"
+          : "border-border bg-surface hover:border-border/80 hover:bg-surface-hover"
+      )}
+    >
+      <span
+        className={cnBase(
+          "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors",
+          selected ? "border-brand bg-brand" : "border-border bg-background"
+        )}
+      >
+        {selected && (
+          <span className="h-1.5 w-1.5 rounded-full bg-brand-fg" aria-hidden />
+        )}
+      </span>
+      <span className="min-w-0 flex-1 text-sm">
+        <span className="flex items-center gap-1.5 text-text-primary">
+          {icon}
+          {label}
+        </span>
         <span className="mt-0.5 block text-text-muted">{description}</span>
       </span>
-    </label>
+    </button>
   );
+}
+
+// utilitário local — evita import extra do cn nesse arquivo de client component
+function cnBase(...classes: (string | false | null | undefined)[]) {
+  return classes.filter(Boolean).join(" ");
 }
 
 function SuccessCard({
