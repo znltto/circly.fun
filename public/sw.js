@@ -1,15 +1,21 @@
 /* Circly service worker
  * Vanilla SW — sem libs.
  * Estratégias:
- *   - install: cacheia app shell mínimo
- *   - activate: limpa caches antigos
+ *   - install: cacheia app shell mínimo + skipWaiting (ativa imediato)
+ *   - activate: limpa caches antigos + clients.claim
  *   - fetch:
  *       - ignora /api/*, cross-origin sensível (supabase/livekit/ws) e não-GET
- *       - cache-first para /_next/static/* e assets estáticos (img/font)
- *       - stale-while-revalidate para páginas same-origin
+ *       - cache-first para /_next/static/* e assets estáticos (img/font) —
+ *         seguro porque Next hash-eia os arquivos
+ *       - NETWORK-FIRST para navegações (páginas) — evita servir HTML velho
+ *         quando tem versão nova no servidor (o motivo do "Ctrl+F5")
+ *   - message SKIP_WAITING: cliente força ativação de SW novo
+ *
+ * CACHE_NAME é bumpado a cada mudança pra invalidar todo o cache antigo.
  */
 
-const CACHE_NAME = "circly-v1";
+const CACHE_NAME = "circly-v3";
+const NAV_TIMEOUT_MS = 3000;
 
 const APP_SHELL = [
   "/",
@@ -144,6 +150,43 @@ async function staleWhileRevalidate(request) {
   return cached || networkPromise;
 }
 
+/**
+ * Network-first com timeout curto e fallback pro cache. Ideal pra páginas —
+ * garante que o HTML servido é o mais novo se a rede tá OK, mas mantém
+ * usabilidade offline.
+ */
+async function networkFirst(request) {
+  const cache = await caches.open(CACHE_NAME);
+  try {
+    const network = await Promise.race([
+      fetch(request),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("timeout")), NAV_TIMEOUT_MS)
+      ),
+    ]);
+    if (network && network.ok && network.type === "basic") {
+      cache.put(request, network.clone()).catch(() => {});
+    }
+    return network;
+  } catch {
+    const cached = await cache.match(request);
+    if (cached) return cached;
+    // Sem cache e sem rede — devolve resposta mínima pro browser não travar.
+    return new Response("Sem conexão.", {
+      status: 503,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }
+}
+
+/* -------- Mensagens do cliente -------- */
+
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener("fetch", (event) => {
   const request = event.request;
 
@@ -176,12 +219,19 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Páginas same-origin (navegações): stale-while-revalidate
+  // Páginas same-origin (navegações): network-first com timeout curto.
+  // Assim, um deploy novo aparece na próxima navegação sem precisar Ctrl+F5.
   if (
     url.origin === self.location.origin &&
     (request.mode === "navigate" || request.destination === "document")
   ) {
-    event.respondWith(staleWhileRevalidate(request));
+    event.respondWith(networkFirst(request));
     return;
+  }
+
+  // Fallback pra estaticos same-origin não classificados (rara ocorrência):
+  // stale-while-revalidate mantém tudo funcional sem cacheamento agressivo.
+  if (url.origin === self.location.origin) {
+    event.respondWith(staleWhileRevalidate(request));
   }
 });

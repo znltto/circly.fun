@@ -27,6 +27,8 @@ interface AppShellProps {
   isAdmin?: boolean;
   /** Contagem inicial de DMs não lidas (SSR). */
   initialUnread?: number;
+  /** Contagem inicial de convites pendentes (SSR). */
+  initialInvitations?: number;
   children: React.ReactNode;
 }
 
@@ -34,6 +36,7 @@ export function AppShell({
   user,
   isAdmin = false,
   initialUnread = 0,
+  initialInvitations = 0,
   children,
 }: AppShellProps) {
   const { t } = useI18n();
@@ -41,25 +44,38 @@ export function AppShell({
   const hasStatus = !!(user.status_message || user.status_emoji);
 
   const [unread, setUnread] = React.useState(initialUnread);
+  const [invitations, setInvitations] = React.useState(initialInvitations);
 
   // Polling leve (20s) + refetch quando o usuário volta pra aba ou muda de
-  // rota. Rota nova = provável leitura ou envio de mensagem; melhor sincronizar.
+  // rota. Uma única chamada agrupada evita 2 requests em paralelo.
   React.useEffect(() => {
     let cancelled = false;
-    async function fetchUnread() {
+    async function fetchCounts() {
       try {
-        const res = await fetch("/api/dms/unread", { cache: "no-store" });
-        if (!res.ok) return;
-        const body = (await res.json()) as { count?: number };
-        if (!cancelled && typeof body.count === "number") setUnread(body.count);
+        const [dmRes, invRes] = await Promise.all([
+          fetch("/api/dms/unread", { cache: "no-store" }),
+          fetch("/api/invitations/count", { cache: "no-store" }),
+        ]);
+        if (dmRes.ok) {
+          const body = (await dmRes.json()) as { count?: number };
+          if (!cancelled && typeof body.count === "number") {
+            setUnread(body.count);
+          }
+        }
+        if (invRes.ok) {
+          const body = (await invRes.json()) as { count?: number };
+          if (!cancelled && typeof body.count === "number") {
+            setInvitations(body.count);
+          }
+        }
       } catch {
-        // ignora — rede pode falhar; próxima tentativa cobre
+        // ignora — próxima tentativa cobre
       }
     }
-    void fetchUnread();
-    const interval = window.setInterval(fetchUnread, 20_000);
+    void fetchCounts();
+    const interval = window.setInterval(fetchCounts, 20_000);
     function onVisibility() {
-      if (document.visibilityState === "visible") void fetchUnread();
+      if (document.visibilityState === "visible") void fetchCounts();
     }
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
@@ -91,7 +107,11 @@ export function AppShell({
             <InstallButton />
           </div>
 
-          <SidebarNav isAdmin={isAdmin} unreadMessages={unread} />
+          <SidebarNav
+            isAdmin={isAdmin}
+            unreadMessages={unread}
+            pendingInvitations={invitations}
+          />
 
           <div className="mt-auto space-y-2">
             <div className="flex items-start gap-3 rounded-md border border-border bg-surface p-3">
@@ -169,7 +189,7 @@ export function AppShell({
         </main>
 
         {/* Nav mobile */}
-        <MobileNav unreadMessages={unread} />
+        <MobileNav unreadMessages={unread} pendingInvitations={invitations} />
       </div>
     </PresenceProvider>
   );

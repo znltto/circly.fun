@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, DoorOpen, User, MessageSquare } from "lucide-react";
+import { Home, Users, DoorOpen, User, MessageSquare, Mails } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n/context";
 import type { TranslationKey } from "@/lib/i18n/translate";
@@ -15,14 +15,17 @@ const items: Array<{
   { href: "/inicio", labelKey: "nav.home", icon: Home },
   { href: "/pessoas", labelKey: "nav.people", icon: Users },
   { href: "/mensagens", labelKey: "nav.dmsShort", icon: MessageSquare },
+  { href: "/convites", labelKey: "nav.invitations", icon: Mails },
   { href: "/salas/nova", labelKey: "nav.newShort", icon: DoorOpen },
   { href: "/conta", labelKey: "nav.account", icon: User },
 ];
 
 export function MobileNav({
   unreadMessages = 0,
+  pendingInvitations = 0,
 }: {
   unreadMessages?: number;
+  pendingInvitations?: number;
 }) {
   const pathname = usePathname();
   const { t } = useI18n();
@@ -39,7 +42,12 @@ export function MobileNav({
               ? pathname === href
               : pathname === href || pathname.startsWith(`${href}/`);
 
-          const badge = href === "/mensagens" ? unreadMessages : 0;
+          const badge =
+            href === "/mensagens"
+              ? unreadMessages
+              : href === "/convites"
+                ? pendingInvitations
+                : 0;
 
           return (
             <li key={href} className="flex-1">

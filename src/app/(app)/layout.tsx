@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/layout/AppShell";
 import { isAdminEmail } from "@/lib/admin";
 import { countTotalUnread } from "@/lib/dms/queries";
+import { countPendingInvitations } from "@/lib/rooms/invitations";
 
 export default async function AppLayout({
   children,
@@ -37,10 +38,18 @@ export default async function AppLayout({
   }
 
   const isAdmin = isAdminEmail(user.email);
-  const initialUnread = await countTotalUnread();
+  const [initialUnread, initialInvitations] = await Promise.all([
+    countTotalUnread(),
+    countPendingInvitations(),
+  ]);
 
   return (
-    <AppShell user={profile} isAdmin={isAdmin} initialUnread={initialUnread}>
+    <AppShell
+      user={profile}
+      isAdmin={isAdmin}
+      initialUnread={initialUnread}
+      initialInvitations={initialInvitations}
+    >
       {children}
     </AppShell>
   );

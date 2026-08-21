@@ -10,6 +10,7 @@ import {
   MessageSquare,
   Shield,
   Calendar,
+  Mails,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n/context";
@@ -26,6 +27,7 @@ const items: NavItem[] = [
   { href: "/inicio", labelKey: "nav.home", icon: Home },
   { href: "/pessoas", labelKey: "nav.people", icon: Users },
   { href: "/mensagens", labelKey: "nav.messages", icon: MessageSquare },
+  { href: "/convites", labelKey: "nav.invitations", icon: Mails },
   { href: "/salas/nova", labelKey: "nav.newRoom", icon: DoorOpen },
   { href: "/salas/agendadas", labelKey: "nav.scheduled", icon: Calendar },
   { href: "/conta", labelKey: "nav.account", icon: User },
@@ -35,9 +37,11 @@ const items: NavItem[] = [
 export function SidebarNav({
   isAdmin = false,
   unreadMessages = 0,
+  pendingInvitations = 0,
 }: {
   isAdmin?: boolean;
   unreadMessages?: number;
+  pendingInvitations?: number;
 }) {
   const pathname = usePathname();
   const { t } = useI18n();
@@ -54,7 +58,12 @@ export function SidebarNav({
         // quando o item é admin-only e o viewer não é admin.
         const hidden = admin && !isAdmin;
 
-        const badge = href === "/mensagens" ? unreadMessages : 0;
+        const badge =
+          href === "/mensagens"
+            ? unreadMessages
+            : href === "/convites"
+              ? pendingInvitations
+              : 0;
 
         return (
           <Link

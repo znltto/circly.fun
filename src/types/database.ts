@@ -611,6 +611,55 @@ export interface Database {
         };
         Relationships: [];
       };
+      room_invitations: {
+        Row: {
+          id: string;
+          room_id: string;
+          inviter_id: string;
+          invitee_id: string;
+          status: "pending" | "accepted" | "declined" | "expired";
+          created_at: string;
+          responded_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          room_id: string;
+          inviter_id: string;
+          invitee_id: string;
+          status?: "pending" | "accepted" | "declined" | "expired";
+          created_at?: string;
+          responded_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          room_id?: string;
+          inviter_id?: string;
+          invitee_id?: string;
+          status?: "pending" | "accepted" | "declined" | "expired";
+          created_at?: string;
+          responded_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "room_invitations_room_id_fkey";
+            columns: ["room_id"];
+            referencedRelation: "rooms";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "room_invitations_inviter_id_fkey";
+            columns: ["inviter_id"];
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "room_invitations_invitee_id_fkey";
+            columns: ["invitee_id"];
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Switch } from "@/components/ui/Switch";
 import { DateTimePicker } from "@/components/ui/DateTimePicker";
+import { InviteFriendsPanel } from "@/components/rooms/InviteFriendsPanel";
 import { createRoom, type CreateRoomState } from "@/lib/rooms/actions";
 
 type Visibility = "link" | "friends" | "private";
@@ -444,6 +445,8 @@ function SuccessCard({
           </Button>
         </div>
       </div>
+
+      <InviteFriendsPanel roomSlug={state.slug!} appUrl={appUrl} />
 
       <div className="flex flex-wrap gap-3">
         <Button

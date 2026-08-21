@@ -38,6 +38,7 @@ export type Dictionary = {
     terms: string;
     privacy: string;
     scheduled: string;
+    invitations: string;
   };
   home: {
     greetingMorning: string;
@@ -170,6 +171,7 @@ const pt: Dictionary = {
     terms: "Termos",
     privacy: "Privacidade",
     scheduled: "Agendadas",
+    invitations: "Convites",
   },
   home: {
     greetingMorning: "Bom dia",
@@ -309,6 +311,7 @@ const es: Dictionary = {
     terms: "Términos",
     privacy: "Privacidad",
     scheduled: "Agendadas",
+    invitations: "Invitaciones",
   },
   home: {
     greetingMorning: "Buenos días",
@@ -448,6 +451,7 @@ const en: Dictionary = {
     terms: "Terms",
     privacy: "Privacy",
     scheduled: "Scheduled",
+    invitations: "Invitations",
   },
   home: {
     greetingMorning: "Good morning",
