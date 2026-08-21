@@ -134,6 +134,7 @@ function HostMenu({
   const { emitToast } = useMeeting();
 
   async function transferHost() {
+    setOpen(false);
     setPending("transfer");
     try {
       const res = await fetch(`/api/rooms/${roomSlug}/host`, {
@@ -162,24 +163,39 @@ function HostMenu({
       });
     } finally {
       setPending(null);
-      setOpen(false);
       setConfirmTransfer(false);
     }
   }
 
   React.useEffect(() => {
     if (!open) return;
-    function onDown(e: MouseEvent) {
+    // pointerdown pega mouse + toque; capture pega antes que o item do menu
+    // engula o evento (fecha se clicou fora, mantém se clicou dentro).
+    function onDown(e: PointerEvent) {
       if (menuRef.current?.contains(e.target as Node)) return;
       setOpen(false);
     }
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
+    document.addEventListener("pointerdown", onDown, true);
+    return () => document.removeEventListener("pointerdown", onDown, true);
+  }, [open]);
+
+  // Fecha o menu ao pressionar Esc, sem precisar clicar fora.
+  React.useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
   async function moderate(
     action: "mute-audio" | "mute-video" | "mute-screen" | "kick"
   ) {
+    // Fecha o menu imediatamente pra evitar cliques duplos enquanto o fetch
+    // roda. O toast dá o feedback do resultado. O dialog de confirmação
+    // continua aberto por conta própria enquanto pending — fecha no finally.
+    setOpen(false);
     setPending(action);
     try {
       const res = await fetch("/api/livekit/moderate", {
@@ -210,7 +226,6 @@ function HostMenu({
       });
     } finally {
       setPending(null);
-      setOpen(false);
       setConfirmKick(false);
     }
   }
@@ -257,7 +272,10 @@ function HostMenu({
                 icon={<Crown className="h-3.5 w-3.5" />}
                 label="Passar controle da sala"
                 loading={pending === "transfer"}
-                onClick={() => setConfirmTransfer(true)}
+                onClick={() => {
+                  setOpen(false);
+                  setConfirmTransfer(true);
+                }}
               />
             </>
           )}
@@ -266,7 +284,10 @@ function HostMenu({
             icon={<UserX className="h-3.5 w-3.5" />}
             label="Remover da sala"
             loading={pending === "kick"}
-            onClick={() => setConfirmKick(true)}
+            onClick={() => {
+              setOpen(false);
+              setConfirmKick(true);
+            }}
             danger
           />
         </div>

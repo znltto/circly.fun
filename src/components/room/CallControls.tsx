@@ -7,6 +7,7 @@ import {
   useRoomContext,
 } from "@livekit/components-react";
 import { AudioPresets, Track, VideoPresets } from "livekit-client";
+import { useMeeting } from "./meeting-context";
 import {
   Mic,
   MicOff,
@@ -92,12 +93,12 @@ export function CallControls({
 }: CallControlsProps) {
   const { localParticipant } = useLocalParticipant();
   const room = useRoomContext();
+  const { cameraOn, setCameraOn, emitToast } = useMeeting();
 
   const mic = useTrackToggle({ source: Track.Source.Microphone });
-  const cam = useTrackToggle({ source: Track.Source.Camera });
 
   const micOn = mic.enabled ?? localParticipant.isMicrophoneEnabled;
-  const camOn = cam.enabled ?? localParticipant.isCameraEnabled;
+  const camOn = cameraOn;
   const screenOn = localParticipant.isScreenShareEnabled;
 
   const [confirmingLeave, setConfirmingLeave] = React.useState(false);
@@ -190,27 +191,50 @@ export function CallControls({
       return;
     }
     try {
-      await localParticipant.setScreenShareEnabled(
-        true,
-        {
-          audio: {
-            echoCancellation: false,
-            noiseSuppression: false,
-            autoGainControl: false,
-          },
-          resolution: VideoPresets.h1080.resolution,
+      // `systemAudio: 'include'` é um hint do Chrome pro seletor mostrar
+      // (e marcar) a opção "Compartilhar áudio do sistema" quando a fonte
+      // escolhida é "Tela inteira". Sem isso, o browser oferece áudio só
+      // ao compartilhar aba. A tipagem do TS ainda não inclui esse campo
+      // (proposta em https://wicg.github.io/capture-controllers/), então
+      // usamos cast local com tipo interno.
+      const captureOptions = {
+        audio: {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
         },
-        {
-          audioPreset: AudioPresets.musicHighQuality,
-          dtx: false,
-          red: false,
-          forceStereo: true,
-          videoEncoding: {
-            maxBitrate: 5_000_000,
-            maxFramerate: 30,
-          },
-        }
+        resolution: VideoPresets.h1080.resolution,
+        systemAudio: "include",
+        selfBrowserSurface: "exclude",
+      } as Parameters<
+        typeof localParticipant.setScreenShareEnabled
+      >[1];
+
+      await localParticipant.setScreenShareEnabled(true, captureOptions, {
+        audioPreset: AudioPresets.musicHighQuality,
+        dtx: false,
+        red: false,
+        forceStereo: true,
+        videoEncoding: {
+          maxBitrate: 5_000_000,
+          maxFramerate: 30,
+        },
+      });
+
+      // Se o browser não entregou trilha de áudio (usuário compartilhou
+      // janela/aba sem marcar a caixinha, ou Firefox/Safari sem suporte),
+      // avisa pra tentar de novo compartilhando tela inteira.
+      const audioPub = localParticipant.getTrackPublication(
+        Track.Source.ScreenShareAudio
       );
+      if (!audioPub) {
+        emitToast?.({
+          tone: "warning",
+          duration: 6000,
+          message:
+            "Compartilhando sem áudio. Pra pegar som do sistema, escolha 'Tela inteira' e marque 'Compartilhar áudio do sistema'.",
+        });
+      }
     } catch (err) {
       console.warn("[screen] falha ao compartilhar:", err);
     }
@@ -272,7 +296,7 @@ export function CallControls({
 
       <ControlButton
         tone={camOn ? "brand" : "muted"}
-        onClick={cam.toggle}
+        onClick={() => setCameraOn(!camOn)}
         label={camOn ? "Desligar câmera" : "Ligar câmera"}
       >
         {camOn ? (

@@ -16,6 +16,14 @@ interface MeetingContextValue {
   setIsHost: (v: boolean) => void;
   isAdmin: boolean;
   localIdentity: string;
+  /**
+   * Estado da câmera local — controlado aqui pra que <VideoPublisher> e
+   * <CallControls> compartilhem a mesma verdade. O useTrackToggle do LiveKit
+   * não enxerga o track que publicamos manualmente (com filtros), então
+   * mantemos o toggle fora dele.
+   */
+  cameraOn: boolean;
+  setCameraOn: (v: boolean) => void;
   toasts: Toast[];
   emitToast: (t: Omit<Toast, "id">) => void;
   dismissToast: (id: string) => void;
@@ -26,14 +34,20 @@ const MeetingContext = React.createContext<MeetingContextValue | null>(null);
 interface MeetingProviderProps {
   value: Omit<
     MeetingContextValue,
-    "toasts" | "emitToast" | "dismissToast" | "setIsHost"
-  >;
+    | "toasts"
+    | "emitToast"
+    | "dismissToast"
+    | "setIsHost"
+    | "cameraOn"
+    | "setCameraOn"
+  > & { initialCameraOn: boolean };
   children: React.ReactNode;
 }
 
 export function MeetingProvider({ value, children }: MeetingProviderProps) {
   const [toasts, setToasts] = React.useState<Toast[]>([]);
   const [isHost, setIsHost] = React.useState(value.isHost);
+  const [cameraOn, setCameraOn] = React.useState(value.initialCameraOn);
 
   // Se o pai reenviar props com novo valor de isHost (ex.: reconnect), respeita.
   React.useEffect(() => {
@@ -60,8 +74,19 @@ export function MeetingProvider({ value, children }: MeetingProviderProps) {
   );
 
   const merged = React.useMemo<MeetingContextValue>(
-    () => ({ ...value, isHost, setIsHost, toasts, emitToast, dismissToast }),
-    [value, isHost, toasts, emitToast, dismissToast]
+    () => ({
+      roomSlug: value.roomSlug,
+      isAdmin: value.isAdmin,
+      localIdentity: value.localIdentity,
+      isHost,
+      setIsHost,
+      cameraOn,
+      setCameraOn,
+      toasts,
+      emitToast,
+      dismissToast,
+    }),
+    [value, isHost, cameraOn, toasts, emitToast, dismissToast]
   );
 
   return (

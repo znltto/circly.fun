@@ -20,7 +20,7 @@ import { CallControls } from "./CallControls";
 import { RightDrawer } from "./RightDrawer";
 import { ParticipantsList } from "./ParticipantsList";
 import { InRoomChat } from "./InRoomChat";
-import { MeetingProvider } from "./meeting-context";
+import { MeetingProvider, useMeeting } from "./meeting-context";
 import { MeetingToasts } from "./MeetingToasts";
 import { RoomSoundEffects } from "./RoomSoundEffects";
 import { BrowserRecorder } from "./BrowserRecorder";
@@ -167,7 +167,13 @@ export function MeetingRoom({
       className="flex h-screen flex-col bg-background"
     >
       <MeetingProvider
-        value={{ roomSlug, isHost, isAdmin, localIdentity: identity }}
+        value={{
+          roomSlug,
+          isHost,
+          isAdmin,
+          localIdentity: identity,
+          initialCameraOn: video.enabled,
+        }}
       >
        <SpotlightProvider>
        <HandRaiseProvider>
@@ -175,7 +181,6 @@ export function MeetingRoom({
         <ConnectionStateToast />
         <RoomSoundEffects />
         <VideoPublisher
-          enabled={video.enabled}
           deviceId={video.deviceId}
           filter={filter}
           backgroundImage={backgroundImage}
@@ -201,18 +206,17 @@ export function MeetingRoom({
  * publica a MediaStreamTrack raw diretamente sem passar pelo canvas.
  */
 function VideoPublisher({
-  enabled,
   deviceId,
   filter,
   backgroundImage,
 }: {
-  enabled: boolean;
   deviceId?: string;
   filter: VideoFilter;
   backgroundImage?: string;
 }) {
   const room = useRoomContext();
   const connectionState = useConnectionState();
+  const { cameraOn } = useMeeting();
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
 
   const rawStreamRef = React.useRef<MediaStream | null>(null);
@@ -221,7 +225,7 @@ function VideoPublisher({
 
   React.useEffect(() => {
     if (connectionState !== ConnectionState.Connected) return;
-    if (!enabled) return;
+    if (!cameraOn) return;
 
     let cancelled = false;
 
@@ -311,7 +315,7 @@ function VideoPublisher({
       rawStreamRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connectionState, enabled]);
+  }, [connectionState, cameraOn]);
 
   return <canvas ref={canvasRef} className="hidden" aria-hidden />;
 }
