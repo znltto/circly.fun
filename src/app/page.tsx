@@ -43,8 +43,8 @@ export default async function Home() {
   const loggedIn = !!user && !!profile;
 
   return (
-    <main className="relative min-h-screen">
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
+    <main className="relative min-h-screen overflow-x-clip">
+      <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 sm:py-6">
         <Link
           href="/"
           className="flex items-center gap-2.5 rounded-md"
@@ -99,35 +99,40 @@ export default async function Home() {
         </nav>
       </header>
 
-      <section className="mx-auto max-w-6xl px-6 pt-16 pb-24 md:pt-24">
-        <div className="grid gap-12 md:grid-cols-[.85fr_1.15fr] md:items-center md:gap-16">
+      <section className="mx-auto max-w-6xl px-4 pt-10 pb-16 sm:px-6 sm:pt-16 sm:pb-24 md:pt-24">
+        <div className="grid gap-10 md:grid-cols-[.85fr_1.15fr] md:items-center md:gap-16">
           <div>
-            <p className="mb-6 flex items-center gap-2 text-xs font-medium tracking-wide text-text-muted uppercase">
+            <p className="mb-5 flex items-center gap-2 text-xs font-medium tracking-wide text-text-muted uppercase">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-brand" />
               {t("landing.tagline")}
             </p>
 
-            <h1 className="text-balance font-serif text-[44px] leading-[1.05] md:text-[64px] md:leading-[1]">
+            <h1 className="text-balance break-words font-serif text-[36px] leading-[1.05] sm:text-[44px] md:text-[64px] md:leading-[1]">
               {t("landing.hero1")}{" "}
               <em className="not-italic text-brand">{t("landing.heroEmphasis")}</em>
               <br />
               {t("landing.hero2")}
             </h1>
 
-            <p className="mt-6 max-w-md text-pretty text-lg text-text-secondary">
+            <p className="mt-5 max-w-md text-pretty text-base text-text-secondary sm:mt-6 sm:text-lg">
               {t("landing.description")}
             </p>
 
-            <div className="mt-10 flex flex-wrap items-center gap-3">
-              <Link href="/entrar">
-                <Button size="lg" rightIcon={<ArrowRight className="h-4 w-4" />}>
+            <div className="mt-8 flex flex-col gap-3 sm:mt-10 sm:flex-row sm:flex-wrap sm:items-center">
+              <Link href="/entrar" className="w-full sm:w-auto">
+                <Button
+                  size="lg"
+                  className="w-full sm:w-auto"
+                  rightIcon={<ArrowRight className="h-4 w-4" />}
+                >
                   {t("landing.createOne")}
                 </Button>
               </Link>
-              <Link href="/entrar">
+              <Link href="/entrar" className="w-full sm:w-auto">
                 <Button
                   variant="secondary"
                   size="lg"
+                  className="w-full sm:w-auto"
                   leftIcon={<Link2 className="h-4 w-4" />}
                 >
                   {t("landing.joinLink")}
@@ -135,7 +140,7 @@ export default async function Home() {
               </Link>
             </div>
 
-            <p className="mt-8 font-mono text-xs text-text-muted">
+            <p className="mt-6 break-all font-mono text-xs text-text-muted sm:mt-8 sm:break-normal">
               {t("landing.urlHint")}<span className="text-text-secondary">ab12cd</span>
             </p>
           </div>
@@ -144,7 +149,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 pb-32">
+      <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6 sm:pb-32">
         <div className="grid gap-8 md:grid-cols-3">
           <Feature
             title={t("landing.feature1Title")}
@@ -162,8 +167,8 @@ export default async function Home() {
       </section>
 
       <footer className="border-t border-border bg-background">
-        <div className="mx-auto max-w-6xl px-6 py-16">
-          <div className="grid grid-cols-2 gap-10 md:grid-cols-5 md:gap-12">
+        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+          <div className="grid grid-cols-2 gap-8 md:grid-cols-5 md:gap-12">
             <div className="col-span-2">
               <Link
                 href="/"
@@ -290,24 +295,24 @@ function Feature({ title, body }: { title: string; body: string }) {
 
 function CallMockup() {
   return (
-    <div className="relative w-full max-w-2xl md:justify-self-end lg:max-w-none lg:min-w-[560px]">
+    <div className="relative isolate w-full max-w-2xl md:justify-self-end lg:max-w-none lg:min-w-[560px]">
       <div
         aria-hidden
-        className="absolute -inset-8 -z-10 rounded-[32px] bg-brand/[0.04] blur-2xl"
+        className="pointer-events-none absolute -inset-4 -z-10 rounded-[24px] bg-brand/[0.04] blur-2xl sm:-inset-8 sm:rounded-[32px]"
       />
 
       <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_30px_80px_-40px_rgba(0,0,0,0.6)]">
-        <div className="flex items-center justify-between border-b border-border/70 px-4 py-3">
-          <div className="flex items-center gap-2.5">
-            <span className="relative flex h-2 w-2 items-center justify-center">
+        <div className="flex items-center justify-between gap-2 border-b border-border/70 px-3 py-2.5 sm:px-4 sm:py-3">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
+            <span className="relative flex h-2 w-2 shrink-0 items-center justify-center">
               <span className="absolute h-2 w-2 animate-ping rounded-full bg-danger/60" />
               <span className="relative h-1.5 w-1.5 rounded-full bg-danger" />
             </span>
-            <span className="text-xs text-text-secondary">Ao vivo</span>
+            <span className="shrink-0 text-xs text-text-secondary">Ao vivo</span>
             <span className="text-text-muted">·</span>
-            <span className="text-xs text-text-primary">Papo de sexta</span>
+            <span className="truncate text-xs text-text-primary">Papo de sexta</span>
           </div>
-          <span className="font-mono text-[10px] text-text-muted">
+          <span className="shrink-0 font-mono text-[10px] text-text-muted">
             3 pessoas
           </span>
         </div>
@@ -338,11 +343,10 @@ function CallMockup() {
             />
           </div>
 
-          {/* Selo do CCO no canto */}
           {/* Selo Circly no canto do tile em destaque */}
-          <div className="pointer-events-none absolute right-6 top-6 flex items-center gap-2.5 rounded-full border border-brand/40 bg-background/85 py-2 pl-2.5 pr-4 shadow-xl shadow-black/40 backdrop-blur-md">
-            <BrandMark className="h-6 w-6" />
-            <Wordmark className="text-lg leading-none" />
+          <div className="pointer-events-none absolute right-4 top-4 flex items-center gap-2 rounded-full border border-brand/40 bg-background/85 py-1.5 pl-2 pr-3 shadow-xl shadow-black/40 backdrop-blur-md sm:right-6 sm:top-6 sm:gap-2.5 sm:py-2 sm:pl-2.5 sm:pr-4">
+            <BrandMark className="h-5 w-5 sm:h-6 sm:w-6" />
+            <Wordmark className="text-sm leading-none sm:text-lg" />
           </div>
         </div>
 

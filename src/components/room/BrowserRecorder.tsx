@@ -18,7 +18,7 @@ import { useMeeting } from "./meeting-context";
  * Só admin vê o botão.
  */
 export function BrowserRecorder() {
-  const { roomSlug, isAdmin } = useMeeting();
+  const { roomSlug, isAdmin, emitToast } = useMeeting();
 
   const [state, setState] = React.useState<
     "idle" | "recording" | "uploading" | "processing" | "error"
@@ -209,8 +209,20 @@ export function BrowserRecorder() {
       };
 
       if (!res.ok || !body.ok) {
-        setError(body.error ?? "Upload falhou.");
+        const msg = body.error ?? "Upload falhou.";
+        setError(msg);
         setState("error");
+        // 501 = bucket 'recordings' não existe no Supabase Storage — mensagem
+        // é acionável (o admin precisa criar o bucket). Toast persistente
+        // pra garantir que ele veja mesmo em mobile (title HTML não ajuda lá).
+        emitToast?.({
+          tone: "danger",
+          duration: res.status === 501 ? 12000 : 6000,
+          message:
+            res.status === 501
+              ? `${msg} Vá em Supabase → Storage → New bucket (privado).`
+              : msg,
+        });
         return;
       }
 
@@ -232,6 +244,11 @@ export function BrowserRecorder() {
     } catch {
       setError("Erro de rede no upload.");
       setState("error");
+      emitToast?.({
+        tone: "danger",
+        duration: 6000,
+        message: "Erro de rede no upload da gravação.",
+      });
     }
   }
 
