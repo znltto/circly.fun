@@ -11,29 +11,32 @@ import {
   Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n/context";
+import type { TranslationKey } from "@/lib/i18n/translate";
 
 interface NavItem {
   href: string;
-  label: string;
+  labelKey: TranslationKey;
   icon: React.ComponentType<{ className?: string }>;
   admin?: boolean;
 }
 
 const items: NavItem[] = [
-  { href: "/inicio", label: "Início", icon: Home },
-  { href: "/pessoas", label: "Pessoas", icon: Users },
-  { href: "/mensagens", label: "Mensagens", icon: MessageSquare },
-  { href: "/salas/nova", label: "Nova sala", icon: DoorOpen },
-  { href: "/conta", label: "Conta", icon: User },
-  { href: "/admin", label: "Admin", icon: Shield, admin: true },
+  { href: "/inicio", labelKey: "nav.home", icon: Home },
+  { href: "/pessoas", labelKey: "nav.people", icon: Users },
+  { href: "/mensagens", labelKey: "nav.messages", icon: MessageSquare },
+  { href: "/salas/nova", labelKey: "nav.newRoom", icon: DoorOpen },
+  { href: "/conta", labelKey: "nav.account", icon: User },
+  { href: "/admin", labelKey: "nav.admin", icon: Shield, admin: true },
 ];
 
 export function SidebarNav({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname();
+  const { t } = useI18n();
 
   return (
-    <nav className="flex flex-col gap-0.5" aria-label="Navegação principal">
-      {items.map(({ href, label, icon: Icon, admin }) => {
+    <nav className="flex flex-col gap-0.5" aria-label={t("nav.main")}>
+      {items.map(({ href, labelKey, icon: Icon, admin }) => {
         const active =
           href === "/inicio"
             ? pathname === href
@@ -66,7 +69,7 @@ export function SidebarNav({ isAdmin = false }: { isAdmin?: boolean }) {
               />
             )}
             <Icon className="h-4 w-4 shrink-0" />
-            <span>{label}</span>
+            <span>{t(labelKey)}</span>
           </Link>
         );
       })}

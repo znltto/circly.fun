@@ -16,7 +16,10 @@ import { Wordmark } from "@/components/brand/Wordmark";
 import { CcoMascot } from "@/components/brand/CcoMascot";
 import { Button } from "@/components/ui/Button";
 import { UserAvatar } from "@/components/ui/Avatar";
+import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
+import { InstallButton } from "@/components/pwa/InstallButton";
 import { createClient } from "@/lib/supabase/server";
+import { getT } from "@/lib/i18n/server";
 import { cn } from "@/lib/utils";
 
 // Landing precisa re-renderizar por request pra pegar auth atualizado.
@@ -25,6 +28,7 @@ export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const supabase = await createClient();
+  const t = await getT();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -45,24 +49,26 @@ export default async function Home() {
         <Link
           href="/"
           className="flex items-center gap-2.5 rounded-md"
-          aria-label="Circly — início"
+          aria-label={`Circly — ${t("nav.home").toLowerCase()}`}
         >
           <BrandMark className="h-7 w-7" />
           <Wordmark className="text-base" />
         </Link>
 
         <nav className="flex items-center gap-2 text-sm">
+          <InstallButton className="mr-1 hidden sm:inline-flex" />
+          <LanguageSwitcher align="right" className="mr-1" />
           {loggedIn ? (
             <>
               <Link href="/salas/nova">
                 <Button size="sm" leftIcon={<Plus className="h-4 w-4" />}>
-                  Nova sala
+                  {t("landing.newRoom")}
                 </Button>
               </Link>
               <Link
                 href="/inicio"
                 className="ml-1 flex items-center gap-2 rounded-full border border-border bg-surface pl-1 pr-3 py-1 transition-colors hover:bg-surface-hover"
-                aria-label={`Ir para o app como ${profile.display_name}`}
+                aria-label={`${t("nav.home")} — ${profile.display_name}`}
               >
                 <UserAvatar
                   name={profile.display_name}
@@ -78,7 +84,7 @@ export default async function Home() {
             <>
               <Link href="/entrar">
                 <Button variant="ghost" size="sm">
-                  Entrar
+                  {t("landing.signIn")}
                 </Button>
               </Link>
               <Link href="/entrar">
@@ -86,7 +92,7 @@ export default async function Home() {
                   size="sm"
                   rightIcon={<ArrowRight className="h-4 w-4" />}
                 >
-                  Criar sala
+                  {t("landing.createRoom")}
                 </Button>
               </Link>
             </>
@@ -99,24 +105,24 @@ export default async function Home() {
           <div>
             <p className="mb-6 flex items-center gap-2 text-xs font-medium tracking-wide text-text-muted uppercase">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-brand" />
-              Feito para poucas pessoas, com carinho.
+              {t("landing.tagline")}
             </p>
 
             <h1 className="text-balance font-serif text-[44px] leading-[1.05] md:text-[64px] md:leading-[1]">
-              Perto, <em className="not-italic text-brand">mesmo</em>
+              {t("landing.hero1")}{" "}
+              <em className="not-italic text-brand">{t("landing.heroEmphasis")}</em>
               <br />
-              de longe.
+              {t("landing.hero2")}
             </h1>
 
             <p className="mt-6 max-w-md text-pretty text-lg text-text-secondary">
-              Uma sala privada para conversar, ver e compartilhar com quem
-              importa. Sem servidores, sem ruído, sem convite público.
+              {t("landing.description")}
             </p>
 
             <div className="mt-10 flex flex-wrap items-center gap-3">
               <Link href="/entrar">
                 <Button size="lg" rightIcon={<ArrowRight className="h-4 w-4" />}>
-                  Criar uma sala
+                  {t("landing.createOne")}
                 </Button>
               </Link>
               <Link href="/entrar">
@@ -125,13 +131,13 @@ export default async function Home() {
                   size="lg"
                   leftIcon={<Link2 className="h-4 w-4" />}
                 >
-                  Entrar com link
+                  {t("landing.joinLink")}
                 </Button>
               </Link>
             </div>
 
             <p className="mt-8 font-mono text-xs text-text-muted">
-              circly.app/s/<span className="text-text-secondary">ab12cd</span>
+              {t("landing.urlHint")}<span className="text-text-secondary">ab12cd</span>
             </p>
           </div>
 
@@ -142,16 +148,16 @@ export default async function Home() {
       <section className="mx-auto max-w-6xl px-6 pb-32">
         <div className="grid gap-8 md:grid-cols-3">
           <Feature
-            title="Sua sala"
-            body="Crie, compartilhe um link e convide. Sem cadastro para quem entra."
+            title={t("landing.feature1Title")}
+            body={t("landing.feature1Body")}
           />
           <Feature
-            title="Sua presença"
-            body="Câmera, voz ou tela — do jeito que fizer sentido no momento."
+            title={t("landing.feature2Title")}
+            body={t("landing.feature2Body")}
           />
           <Feature
-            title="Suas pessoas"
-            body="Uma lista curta de amigos, sem timeline, sem barulho."
+            title={t("landing.feature3Title")}
+            body={t("landing.feature3Body")}
           />
         </div>
       </section>
@@ -163,43 +169,42 @@ export default async function Home() {
               <Link
                 href="/"
                 className="flex items-center gap-2.5"
-                aria-label="Circly — início"
+                aria-label={`Circly — ${t("nav.home").toLowerCase()}`}
               >
                 <BrandMark className="h-6 w-6" />
                 <Wordmark className="text-base" />
               </Link>
               <p className="mt-4 max-w-xs text-sm text-text-secondary text-pretty">
-                Sala privada de videochamada para poucas pessoas. Feito com
-                carinho no Brasil, sem servidor gigante e sem anúncio.
+                {t("landing.footerBio")}
               </p>
               <p className="mt-4 flex items-center gap-1.5 text-xs text-text-muted">
                 <span className="h-1.5 w-1.5 rounded-full bg-success" />
-                Todos os sistemas operando
+                {t("landing.footerStatus")}
               </p>
             </div>
 
             <FooterColumn
-              title="Produto"
+              title={t("landing.footerProduct")}
               links={[
-                { href: "/", label: "Início" },
-                { href: "/salas/nova", label: "Criar sala" },
-                { href: "/entrar", label: "Entrar" },
+                { href: "/", label: t("nav.home") },
+                { href: "/salas/nova", label: t("landing.createRoom") },
+                { href: "/entrar", label: t("landing.signIn") },
               ]}
             />
 
             <FooterColumn
-              title="Circly"
+              title={t("landing.footerCircly")}
               links={[
-                { href: "/sobre", label: "Sobre" },
-                { href: "/termos", label: "Termos de uso" },
-                { href: "/privacidade", label: "Privacidade" },
+                { href: "/sobre", label: t("landing.footerCircly") },
+                { href: "/termos", label: t("nav.terms") },
+                { href: "/privacidade", label: t("nav.privacy") },
               ]}
             />
 
             <FooterColumn
-              title="Contato"
+              title={t("landing.footerContact")}
               links={[
-                { href: "/contato", label: "Fale comigo" },
+                { href: "/contato", label: t("landing.footerContact") },
                 {
                   href: "mailto:arthur@endogest.com.br",
                   label: "arthur@endogest.com.br",
@@ -211,7 +216,7 @@ export default async function Home() {
 
           <div className="mt-12 flex flex-col-reverse items-start justify-between gap-4 border-t border-border pt-6 text-xs text-text-muted md:flex-row md:items-center">
             <span>
-              © {new Date().getFullYear()} Circly. Feito por{" "}
+              © {new Date().getFullYear()} Circly. {t("landing.footerCredit")}{" "}
               <a
                 href="mailto:arthur@endogest.com.br"
                 className="text-text-secondary hover:text-text-primary"
@@ -220,7 +225,7 @@ export default async function Home() {
               </a>
               .
             </span>
-            <span className="font-mono">v0.1 · MVP em construção</span>
+            <span className="font-mono">v0.1 · MVP</span>
           </div>
         </div>
       </footer>

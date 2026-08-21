@@ -75,6 +75,55 @@
     border-radius: 4px;
   }
 
+  /* ---------------------------------------------------------------
+   * Scrollbar personalizada — global (todas as páginas)
+   * --------------------------------------------------------------- */
+
+  /* Firefox */
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+
+  /* Webkit (Chrome, Safari, Edge, Opera) */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border: 2px solid transparent;
+    background-clip: content-box;
+    border-radius: 999px;
+    transition: background 200ms ease;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--brand) / 0.85);
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:active {
+    background: hsl(var(--brand));
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Variante mais fina para chat/drawers — aplica adicionando `scrollbar-slim` */
+  .scrollbar-slim {
+    scrollbar-width: thin;
+  }
+  .scrollbar-slim::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-slim::-webkit-scrollbar-thumb {
+    border-width: 1px;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

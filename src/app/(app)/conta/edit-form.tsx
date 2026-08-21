@@ -6,6 +6,7 @@ import { Upload } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { UserAvatar } from "@/components/ui/Avatar";
+import { useI18n } from "@/lib/i18n/context";
 import { updateProfile, type UpdateProfileState } from "./actions";
 
 interface EditFormProps {
@@ -23,6 +24,7 @@ export function EditForm({
   avatarUrl,
   statusMessage,
 }: EditFormProps) {
+  const { t } = useI18n();
   const [state, formAction, pending] = useActionState<
     UpdateProfileState,
     FormData
@@ -53,12 +55,12 @@ export function EditForm({
         error?: string;
       };
       if (!res.ok || !body.url) {
-        setUploadError(body.error ?? "Falha ao subir imagem.");
+        setUploadError(body.error ?? t("account.uploadImageError"));
       } else {
         setPreviewUrl(body.url);
       }
     } catch {
-      setUploadError("Erro de rede.");
+      setUploadError(t("account.networkError"));
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -67,7 +69,9 @@ export function EditForm({
 
   return (
     <div className="rounded-lg border border-border bg-surface p-6">
-      <h2 className="font-serif text-lg text-text-primary">Perfil</h2>
+      <h2 className="font-serif text-lg text-text-primary">
+        {t("account.profileHeading")}
+      </h2>
 
       <div className="mt-6 flex flex-col items-center gap-3">
         <div className="relative">
@@ -76,7 +80,7 @@ export function EditForm({
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            aria-label="Trocar avatar"
+            aria-label={t("account.changeAvatar")}
             className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-brand text-brand-fg shadow-lg hover:bg-brand-hover disabled:opacity-50"
           >
             {uploading ? (
@@ -94,7 +98,7 @@ export function EditForm({
           onChange={handleUpload}
         />
         <p className="text-xs text-text-muted">
-          JPG, PNG, WebP ou GIF. Máximo 2 MB.
+          {t("account.avatarHint")}
         </p>
         {uploadError && (
           <p role="alert" className="text-xs text-danger">
@@ -106,8 +110,8 @@ export function EditForm({
       <form action={formAction} className="mt-8 space-y-4" noValidate>
         <Input
           name="display_name"
-          label="Nome de exibição"
-          hint="1-40 caracteres"
+          label={t("account.displayName")}
+          hint={t("account.displayNameHint")}
           defaultValue={displayName}
           maxLength={40}
           required
@@ -115,8 +119,8 @@ export function EditForm({
         />
         <Input
           name="username"
-          label="@ username"
-          hint="letras minúsculas, números, _, 3-24 caracteres"
+          label={t("account.username")}
+          hint={t("account.usernameHint")}
           defaultValue={username}
           maxLength={24}
           required
@@ -127,23 +131,23 @@ export function EditForm({
         <div className="pt-2">
           <Input
             name="status_message"
-            label="Status"
-            hint="Uma mensagem curta que aparece do lado do seu nome."
-            placeholder="Ex: focado, voltarei em 5min…"
+            label={t("account.status")}
+            hint={t("account.statusHint")}
+            placeholder={t("account.statusPlaceholder")}
             defaultValue={statusMessage ?? ""}
             maxLength={60}
-            aria-label="Mensagem do status"
+            aria-label={t("account.status")}
           />
         </div>
 
         {state?.success && (
           <p className="text-xs text-success" role="status">
-            Alterações salvas.
+            {t("account.savedOk")}
           </p>
         )}
 
         <Button type="submit" loading={pending}>
-          Salvar alterações
+          {t("account.saveChanges")}
         </Button>
       </form>
     </div>

@@ -4,6 +4,9 @@ import "@/styles/globals.css";
 import { ServiceWorkerRegistrar } from "@/components/pwa/ServiceWorkerRegistrar";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { HelpBubble } from "@/components/help/HelpBubble";
+import { I18nProvider } from "@/lib/i18n/context";
+import { LOCALE_META } from "@/lib/i18n/config";
+import { getLocale, hasLocaleCookie } from "@/lib/i18n/server";
 
 const nunitoSans = Nunito_Sans({
   subsets: ["latin"],
@@ -84,21 +87,27 @@ export const viewport: Viewport = {
   maximumScale: 5,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const locale = await getLocale();
+  const persisted = await hasLocaleCookie();
+  const htmlLang = LOCALE_META[locale].htmlLang;
+
   return (
     <html
-      lang="pt-BR"
+      lang={htmlLang}
       data-theme="dark"
       className={`${nunitoSans.variable} ${bowlbyOne.variable} ${geistMono.variable}`}
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-background text-text-primary font-sans antialiased">
-        <ServiceWorkerRegistrar />
-        {children}
-        <InstallPrompt />
-        <HelpBubble />
+        <I18nProvider initialLocale={locale} hasPersistedLocale={persisted}>
+          <ServiceWorkerRegistrar />
+          {children}
+          <InstallPrompt />
+          <HelpBubble />
+        </I18nProvider>
       </body>
     </html>
   );
